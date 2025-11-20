@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'models/link.dart';
 import 'models/link_params.dart';
@@ -9,6 +10,7 @@ import 'services/api_service.dart';
 import 'services/storage_service.dart';
 import 'services/fingerprint_service.dart';
 import 'services/deep_link_service.dart';
+import 'services/deferred_deep_link_service.dart';
 import 'services/analytics_service.dart';
 import 'smartlink_config.dart';
 import 'utils/logger.dart';
@@ -496,6 +498,110 @@ class SmartLinkClient {
         'SmartLink not initialized. Call SmartLinkClient.initialize() first.',
       );
     }
+  }
+
+  /// Handle deferred deep linking
+  ///
+  /// Call this on app launch to detect if this is a deferred deep link installation.
+  /// The SDK will gather device fingerprint and match it against stored web fingerprints.
+  ///
+  /// Returns the matched deep link URL if found, null otherwise.
+  Future<String?> handleDeferredDeepLink({
+    required VoidCallback onFound,
+    VoidCallback? onNotFound,
+  }) async {
+    if (!_initialized) {
+      SmartLinkLogger.error('SmartLink not initialized');
+      onNotFound?.call();
+      return null;
+    }
+
+    try {
+      SmartLinkLogger.info('Handling deferred deep link...');
+
+      // Import the service locally to avoid circular dependencies
+      // ignore: avoid_relative_library_imports
+      final deferredService = DeferredDeepLinkService(
+        apiService: _api,
+        fingerprintService: _fingerprint,
+      );
+
+      final match = await deferredService.matchDeepLink();
+
+      if (match?.found == true && match?.deepLinkUrl != null) {
+        SmartLinkLogger.info('✅ Deferred deep link found: ${match?.deepLinkUrl}');
+        SmartLinkLogger.info('   Confidence: ${match?.confidence}');
+
+        // Only open if confidence is acceptable
+        if (match!.isAcceptableConfidence()) {
+          onFound();
+
+          // Track the install with deferred link data
+          await _api.trackInstall(
+            deferredLinkId: match.linkId,
+            matchConfidence: match.confidence,
+            matchScore: match.score.toDouble(),
+          );
+
+          return match.deepLinkUrl;
+        } else {
+          SmartLinkLogger.warning('⚠️ Deep link confidence too low: ${match.confidence}');
+          onNotFound?.call();
+          return null;
+        }
+      } else {
+        SmartLinkLogger.info('ℹ️ No deferred deep link found');
+        onNotFound?.call();
+        return null;
+      }
+    } catch (e) {
+      SmartLinkLogger.error('Error handling deferred deep link: $e', e);
+      onNotFound?.call();
+      return null;
+    }
+  }
+
+  /// Track app installation
+  ///
+  /// Call this after app is launched to track the installation.
+  /// Optionally include deferred link matching data.
+  Future<bool> trackInstall({
+    String? deferredLinkId,
+    String? matchConfidence,
+    double? matchScore,
+  }) async {
+    if (!_initialized) {
+      SmartLinkLogger.error('SmartLink not initialized');
+      return false;
+    }
+
+    return _api.trackInstall(
+      deferredLinkId: deferredLinkId,
+      matchConfidence: matchConfidence,
+      matchScore: matchScore,
+    );
+  }
+
+  /// Track conversion event
+  ///
+  /// Call this when user completes a conversion (purchase, signup, etc.)
+  Future<bool> trackConversion({
+    required String linkId,
+    required String conversionType,
+    double? revenue,
+    Map<String, String>? customData,
+  }) async {
+    if (!_initialized) {
+      SmartLinkLogger.error('SmartLink not initialized');
+      return false;
+    }
+
+    return _api.trackConversion(
+      linkId: linkId,
+      conversionType: conversionType,
+      revenue: revenue,
+      customData: customData,
+    );
   }
 
   /// Reset SDK (clear all data)
