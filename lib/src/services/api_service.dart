@@ -55,13 +55,16 @@ class ApiService {
 
   /// Build full URL from path
   String _buildUrl(String path) {
-    final cleanBase = baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
+    final cleanBase = baseUrl.endsWith('/')
+        ? baseUrl.substring(0, baseUrl.length - 1)
+        : baseUrl;
     final cleanPath = path.startsWith('/') ? path : '/$path';
     return '$cleanBase$cleanPath';
   }
 
   /// Make GET request
-  Future<Map<String, dynamic>> _get(String path, {Map<String, String>? queryParams}) async {
+  Future<Map<String, dynamic>> _get(String path,
+      {Map<String, String>? queryParams}) async {
     try {
       var uri = Uri.parse(_buildUrl(path));
 
@@ -71,7 +74,8 @@ class ApiService {
 
       SmartLinkLogger.debug('GET $uri');
 
-      final response = await client.get(uri, headers: _headers).timeout(timeout);
+      final response =
+          await client.get(uri, headers: _headers).timeout(timeout);
 
       return _handleResponse(response);
     } catch (e) {
@@ -81,7 +85,8 @@ class ApiService {
   }
 
   /// Make POST request
-  Future<Map<String, dynamic>> _post(String path, Map<String, dynamic> body) async {
+  Future<Map<String, dynamic>> _post(
+      String path, Map<String, dynamic> body) async {
     try {
       final uri = Uri.parse(_buildUrl(path));
 
@@ -104,7 +109,8 @@ class ApiService {
   }
 
   /// Make PUT request
-  Future<Map<String, dynamic>> _put(String path, Map<String, dynamic> body) async {
+  Future<Map<String, dynamic>> _put(
+      String path, Map<String, dynamic> body) async {
     try {
       final uri = Uri.parse(_buildUrl(path));
 
@@ -132,7 +138,8 @@ class ApiService {
 
       SmartLinkLogger.debug('DELETE $uri');
 
-      final response = await client.delete(uri, headers: _headers).timeout(timeout);
+      final response =
+          await client.delete(uri, headers: _headers).timeout(timeout);
 
       _handleResponse(response);
     } catch (e) {
@@ -223,7 +230,9 @@ class ApiService {
 
     if (response['success'] == true && response['data'] != null) {
       final linksData = response['data'] as List;
-      return linksData.map((json) => SmartLink.fromJson(json as Map<String, dynamic>)).toList();
+      return linksData
+          .map((json) => SmartLink.fromJson(json as Map<String, dynamic>))
+          .toList();
     }
 
     throw ApiException('Failed to get links: ${response['message']}');
@@ -251,8 +260,39 @@ class ApiService {
   // SDK / DEFERRED DEEP LINKING
   // ============================================================================
 
-  /// Get deferred deep link data (after app install)
+  /// Get deferred deep link by Android Play Install Referrer token
+  /// GET /api/v1/sdk/deferred-link/referrer/:token
+  ///
+  /// LINK-004: Deterministic matching for Android using Play Install Referrer API.
+  /// This provides 100% accurate attribution for Android installs.
+  ///
+  /// Returns [DeferredLinkResponse] if a match is found, null otherwise.
+  Future<Map<String, dynamic>?> getDeferredLinkByReferrer(
+      String referrerToken) async {
+    try {
+      SmartLinkLogger.debug(
+          'Looking up deferred link by referrer token: ${referrerToken.substring(0, referrerToken.length > 20 ? 20 : referrerToken.length)}...');
+
+      final response =
+          await _get('/api/v1/sdk/deferred-link/referrer/$referrerToken');
+
+      if (response['success'] == true) {
+        SmartLinkLogger.info('Deferred link found via referrer token');
+        return response;
+      }
+
+      SmartLinkLogger.debug('No deferred link found for referrer token');
+      return null;
+    } catch (e) {
+      SmartLinkLogger.warning('No deferred link found for referrer token', e);
+      return null;
+    }
+  }
+
+  /// Get deferred deep link data (after app install) using fingerprint
   /// GET /api/v1/sdk/deferred-link?fingerprint=...
+  ///
+  /// This is the probabilistic fallback method when Android referrer is not available.
   Future<AttributionData?> getDeferredLink(String fingerprint) async {
     try {
       final response = await _get(
@@ -261,7 +301,8 @@ class ApiService {
       );
 
       if (response['success'] == true && response['data'] != null) {
-        return AttributionData.fromJson(response['data'] as Map<String, dynamic>);
+        return AttributionData.fromJson(
+            response['data'] as Map<String, dynamic>);
       }
 
       return null;
@@ -273,18 +314,47 @@ class ApiService {
 
   /// Track app install
   /// POST /api/v1/sdk/install
-  Future<void> trackInstall({
-    required String fingerprint,
-    required String deviceId,
-    required String platform,
+  ///
+  /// Tracks app installation with device information and optional deferred link attribution.
+  ///
+  /// Parameters:
+  /// - [fingerprint]: Device fingerprint for attribution
+  /// - [deviceId]: Unique device identifier
+  /// - [platform]: Platform name (android, ios)
+  /// - [appVersion]: App version string
+  /// - [deferredLinkId]: ID of matched deferred link (if any)
+  /// - [matchMethod]: How the deferred link was matched ('referrer' or 'fingerprint')
+  /// - [matchConfidence]: Confidence level of the match
+  /// - [matchScore]: Numeric score of the match
+  Future<bool> trackInstall({
+    String? fingerprint,
+    String? deviceId,
+    String? platform,
     String? appVersion,
+    String? deferredLinkId,
+    String? matchMethod,
+    String? matchConfidence,
+    double? matchScore,
   }) async {
-    await _post('/api/v1/sdk/install', {
-      'fingerprint': fingerprint,
-      'deviceId': deviceId,
-      'platform': platform,
-      if (appVersion != null) 'appVersion': appVersion,
-    });
+    try {
+      await _post('/api/v1/sdk/install', {
+        'timestamp': DateTime.now().toIso8601String(),
+        if (fingerprint != null) 'fingerprint': fingerprint,
+        if (deviceId != null) 'deviceId': deviceId,
+        if (platform != null) 'platform': platform,
+        if (appVersion != null) 'appVersion': appVersion,
+        if (deferredLinkId != null) 'deferredLinkId': deferredLinkId,
+        if (matchMethod != null) 'matchMethod': matchMethod,
+        if (matchConfidence != null) 'matchConfidence': matchConfidence,
+        if (matchScore != null) 'matchScore': matchScore,
+      });
+
+      SmartLinkLogger.info('Installation tracked successfully');
+      return true;
+    } catch (e) {
+      SmartLinkLogger.error('Error tracking installation: $e', e);
+      return false;
+    }
   }
 
   /// Track SDK event
@@ -307,22 +377,42 @@ class ApiService {
 
   /// Track conversion (purchase, signup, etc.)
   /// POST /api/v1/sdk/conversions
-  Future<void> trackConversion({
+  ///
+  /// Tracks conversion events like purchases, signups, or other valuable actions.
+  ///
+  /// Parameters:
+  /// - [type]: Type of conversion (e.g., 'purchase', 'signup', 'subscription')
+  /// - [revenue]: Revenue amount (optional)
+  /// - [currency]: Currency code (default: 'USD')
+  /// - [linkId]: Associated link ID for attribution
+  /// - [eventId]: Unique event identifier
+  /// - [metadata]: Additional conversion data
+  Future<bool> trackConversion({
     required String type,
-    required double revenue,
+    double? revenue,
     String currency = 'USD',
     String? linkId,
     String? eventId,
     Map<String, dynamic>? metadata,
   }) async {
-    await _post('/api/v1/sdk/conversions', {
-      'type': type,
-      'revenue': revenue,
-      'currency': currency,
-      if (linkId != null) 'linkId': linkId,
-      if (eventId != null) 'eventId': eventId,
-      if (metadata != null) 'metadata': metadata,
-    });
+    try {
+      await _post('/api/v1/sdk/conversions', {
+        'type': type,
+        'timestamp': DateTime.now().toIso8601String(),
+        if (revenue != null) 'revenue': revenue,
+        'currency': currency,
+        if (linkId != null) 'linkId': linkId,
+        if (eventId != null) 'eventId': eventId,
+        if (metadata != null) 'metadata': metadata,
+      });
+
+      SmartLinkLogger.info(
+          'Conversion tracked: $type${linkId != null ? ' for $linkId' : ''}');
+      return true;
+    } catch (e) {
+      SmartLinkLogger.error('Error tracking conversion: $e', e);
+      return false;
+    }
   }
 
   /// Get SDK configuration
@@ -387,7 +477,7 @@ class ApiService {
         fingerprint is Map ? fingerprint : fingerprint.toJson(),
       );
 
-      if (response == null) {
+      if (response['success'] != true) {
         SmartLinkLogger.debug('No match found for deferred deep link');
         return null;
       }
@@ -397,64 +487,6 @@ class ApiService {
     } catch (e) {
       SmartLinkLogger.warning('Error matching deferred deep link: $e');
       return null;
-    }
-  }
-
-  /// Track app installation with optional deferred link data
-  /// POST /api/v1/sdk/install
-  /// Requires public API key authentication
-  Future<bool> trackInstall({
-    String? deferredLinkId,
-    String? matchConfidence,
-    double? matchScore,
-    String? skAdNetworkData,
-  }) async {
-    try {
-      await _post(
-        '/api/v1/sdk/install',
-        {
-          'timestamp': DateTime.now().toIso8601String(),
-          'deferredLinkId': deferredLinkId,
-          'matchConfidence': matchConfidence,
-          'matchScore': matchScore,
-          'skAdNetworkData': skAdNetworkData,
-        },
-      );
-
-      SmartLinkLogger.info('Installation tracked successfully');
-      return true;
-    } catch (e) {
-      SmartLinkLogger.error('Error tracking installation: $e', e);
-      return false;
-    }
-  }
-
-  /// Track conversion event
-  /// POST /api/v1/sdk/conversions
-  /// Requires public API key authentication
-  Future<bool> trackConversion({
-    required String linkId,
-    required String conversionType,
-    double? revenue,
-    Map<String, String>? customData,
-  }) async {
-    try {
-      await _post(
-        '/api/v1/sdk/conversions',
-        {
-          'linkId': linkId,
-          'type': conversionType,
-          'revenue': revenue,
-          'customData': customData,
-          'timestamp': DateTime.now().toIso8601String(),
-        },
-      );
-
-      SmartLinkLogger.info('Conversion tracked: $conversionType for $linkId');
-      return true;
-    } catch (e) {
-      SmartLinkLogger.error('Error tracking conversion: $e', e);
-      return false;
     }
   }
 

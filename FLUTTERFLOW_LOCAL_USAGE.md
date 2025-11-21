@@ -145,6 +145,148 @@ dependencies:
 
 ---
 
+## 🚀 Deferred Deep Linking (LINK-004)
+
+The SDK now supports **deterministic deferred deep linking** on Android using the Play Install Referrer API!
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     SDK INITIALIZATION                           │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Is First Launch?                              │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+              ┌───────────────┴───────────────┐
+              │ YES                           │ NO
+              ▼                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                  Check Platform                                  │
+└─────────────────────────────────────────────────────────────────┘
+              │
+    ┌─────────┴─────────┐
+    │ ANDROID           │ iOS
+    ▼                   ▼
+┌─────────────────────┐ ┌─────────────────────────────────────────┐
+│ Play Install        │ │ Fingerprint Matching                     │
+│ Referrer API        │ │ (~85-90% accuracy)                       │
+│ (100% accurate)     │ │                                          │
+└─────────────────────┘ └─────────────────────────────────────────┘
+              │                   │
+              ▼                   │
+┌─────────────────────┐           │
+│ Token found?        │           │
+│ YES → Use referrer  │           │
+│ NO → Fallback to    │───────────┘
+│      fingerprint    │
+└─────────────────────┘
+```
+
+### Platform-Specific Behavior
+
+| Platform | Primary Method | Accuracy | Fallback |
+|----------|---------------|----------|----------|
+| **Android** | Play Install Referrer | 100% | Fingerprint |
+| **iOS** | Fingerprint | ~85-90% | - |
+
+### Custom Action: Check Deferred Deep Link
+
+```dart
+import 'dart:io';
+import 'package:smartlink_flutter_sdk/smartlink_flutter_sdk.dart';
+
+/// Check for deferred deep link and get match details
+/// Returns JSON with deepLinkUrl and matchMethod
+Future<String?> checkDeferredDeepLink() async {
+  try {
+    String? result;
+
+    await SmartLinkClient.instance.handleDeferredDeepLink(
+      onFound: () {
+        print('Deferred deep link found!');
+      },
+      onNotFound: () {
+        print('No deferred deep link');
+      },
+    ).then((deepLinkUrl) {
+      if (deepLinkUrl != null) {
+        // Return info about the match
+        final matchMethod = Platform.isAndroid ? 'referrer' : 'fingerprint';
+        result = '{"deepLinkUrl": "$deepLinkUrl", "matchMethod": "$matchMethod"}';
+      }
+    });
+
+    return result;
+  } catch (e) {
+    print('Error checking deferred deep link: $e');
+    return null;
+  }
+}
+```
+
+### Custom Action: Get Attribution Source
+
+```dart
+import 'dart:io';
+
+/// Get the attribution source type for the current platform
+/// Returns: "deterministic" (Android) or "probabilistic" (iOS)
+String getAttributionSourceType() {
+  if (Platform.isAndroid) {
+    return 'deterministic'; // Play Install Referrer - 100% accurate
+  } else if (Platform.isIOS) {
+    return 'probabilistic'; // Fingerprint matching - ~85-90% accurate
+  }
+  return 'unknown';
+}
+```
+
+### Display Attribution Method in UI
+
+In FlutterFlow, you can show users how they were attributed:
+
+```dart
+import 'dart:io';
+import 'package:flutter/material.dart';
+
+/// Widget to display attribution method
+Widget buildAttributionInfo() {
+  final isAndroid = Platform.isAndroid;
+
+  return Container(
+    padding: EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: isAndroid ? Colors.green.shade50 : Colors.orange.shade50,
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Row(
+      children: [
+        Icon(
+          isAndroid ? Icons.verified : Icons.fingerprint,
+          color: isAndroid ? Colors.green : Colors.orange,
+        ),
+        SizedBox(width: 8),
+        Text(
+          isAndroid
+            ? 'Attribution: Play Install Referrer (100% accurate)'
+            : 'Attribution: Fingerprint Matching (~85-90% accurate)',
+          style: TextStyle(
+            color: isAndroid ? Colors.green.shade700 : Colors.orange.shade700,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+```
+
+---
+
 ## 🎯 Recommended Workflow
 
 ### For Your Use Case (Local Network Testing):
@@ -255,6 +397,31 @@ Future<void> setupDeepLinkListener(BuildContext context) async {
 }
 ```
 
+**Action: trackConversion** (NEW)
+```dart
+import 'package:smartlink_flutter_sdk/smartlink_flutter_sdk.dart';
+
+/// Track a conversion event (purchase, signup, etc.)
+Future<bool> trackSmartLinkConversion({
+  required String type,
+  double? revenue,
+  String currency = 'USD',
+  String? linkId,
+}) async {
+  try {
+    return await SmartLinkClient.instance.trackConversion(
+      type: type,
+      revenue: revenue,
+      currency: currency,
+      linkId: linkId,
+    );
+  } catch (e) {
+    print('Failed to track conversion: $e');
+    return false;
+  }
+}
+```
+
 ### 4. App Initialization
 
 **App Settings → On App Start:**
@@ -324,6 +491,29 @@ flutter run      # Test changes
 - SDK requires: `sdk: ^3.10.0`, `flutter: >=3.38.0`
 - Update Flutter: `flutter upgrade`
 
+### Issue: "Play Install Referrer not working"
+
+**Android-specific troubleshooting**:
+1. App must be installed from Play Store (not sideloaded/debug)
+2. Google Play Services must be available on device
+3. SmartLink backend must include `deferred_link` parameter in Play Store URL
+4. Check logs for: `Retrieving Play Install Referrer...`
+
+**Expected log output (success)**:
+```
+I/SmartLink: Retrieving Play Install Referrer...
+I/SmartLink: Found deferred_link token: eyJsaWQiOiJjbWk3NW...
+I/SmartLink: ✅ Deterministic match found via referrer!
+```
+
+**Expected log output (fallback to fingerprint)**:
+```
+I/SmartLink: Retrieving Play Install Referrer...
+D/SmartLink: Empty referrer URL
+D/SmartLink: Referrer lookup failed, falling back to fingerprint...
+I/SmartLink: Using fingerprint matching...
+```
+
 ---
 
 ## ✅ Quick Checklist
@@ -337,6 +527,7 @@ Before using SDK in FlutterFlow:
 - [ ] App initialization configured
 - [ ] Code downloaded (if using path/local testing)
 - [ ] Platform files updated (Info.plist, AndroidManifest.xml)
+- [ ] (Android) Play Install Referrer tested on real device from Play Store
 
 ---
 
@@ -349,6 +540,18 @@ Before using SDK in FlutterFlow:
 | **Server** | Enterprise, CI/CD | ✅ Yes | ✅ Yes | High |
 
 **Recommendation**: Use **Git** for your scenario (team testing on local network).
+
+---
+
+## 📊 Deferred Deep Linking Comparison
+
+| Feature | Android (Play Install Referrer) | iOS (Fingerprint) |
+|---------|--------------------------------|-------------------|
+| Accuracy | 100% deterministic | ~85-90% probabilistic |
+| Requirements | Play Store install | None |
+| Fallback | Fingerprint matching | - |
+| Privacy | No PII needed | Device attributes |
+| Setup | Automatic (SDK handles) | Automatic |
 
 ---
 

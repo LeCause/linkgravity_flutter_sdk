@@ -41,7 +41,8 @@ class SmartLinkConfig {
     this.globalMetadata,
   }) {
     // Validate configuration
-    assert(batchSize > 0 && batchSize <= 100, 'Batch size must be between 1 and 100');
+    assert(batchSize > 0 && batchSize <= 100,
+        'Batch size must be between 1 and 100');
     assert(
       batchTimeout.inMilliseconds >= 1000,
       'Batch timeout must be at least 1 second',

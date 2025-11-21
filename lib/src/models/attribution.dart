@@ -129,7 +129,8 @@ class AttributionData {
       if (utmContent != null) 'utmContent': utmContent,
       if (clickedAt != null) 'clickedAt': clickedAt!.toIso8601String(),
       if (installedAt != null) 'installedAt': installedAt!.toIso8601String(),
-      if (firstOpenedAt != null) 'firstOpenedAt': firstOpenedAt!.toIso8601String(),
+      if (firstOpenedAt != null)
+        'firstOpenedAt': firstOpenedAt!.toIso8601String(),
       if (deferredLink != null) 'deferredLink': deferredLink,
       if (deepLinkPath != null) 'deepLinkPath': deepLinkPath,
       if (deepLinkParams != null) 'deepLinkParams': deepLinkParams,

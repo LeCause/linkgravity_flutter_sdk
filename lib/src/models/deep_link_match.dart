@@ -54,13 +54,13 @@ class DeepLinkMatch {
 
   /// Convert to JSON
   Map<String, dynamic> toJson() => {
-    'found': found,
-    'confidence': confidence,
-    'score': score,
-    'deepLinkUrl': deepLinkUrl,
-    'linkId': linkId,
-    'metadata': metadata.toJson(),
-  };
+        'found': found,
+        'confidence': confidence,
+        'score': score,
+        'deepLinkUrl': deepLinkUrl,
+        'linkId': linkId,
+        'metadata': metadata.toJson(),
+      };
 
   @override
   String toString() => 'DeepLinkMatch('
@@ -117,13 +117,13 @@ class DeepLinkMatchMetadata {
 
   /// Convert to JSON
   Map<String, dynamic> toJson() => {
-    'matchReasons': matchReasons,
-    'platformMatch': platformMatch,
-    'timezoneMatch': timezoneMatch,
-    'localeMatch': localeMatch,
-    'browserMatch': browserMatch,
-    'timeWindow': timeWindow,
-  };
+        'matchReasons': matchReasons,
+        'platformMatch': platformMatch,
+        'timezoneMatch': timezoneMatch,
+        'localeMatch': localeMatch,
+        'browserMatch': browserMatch,
+        'timeWindow': timeWindow,
+      };
 
   @override
   String toString() => 'DeepLinkMatchMetadata('
@@ -189,15 +189,15 @@ class SDKFingerprint {
 
   /// Convert to JSON
   Map<String, dynamic> toJson() => {
-    'platform': platform,
-    'idfv': idfv,
-    'model': model,
-    'osVersion': osVersion,
-    'timezone': timezone,
-    'locale': locale,
-    'userAgent': userAgent,
-    'timestamp': timestamp,
-  };
+        'platform': platform,
+        'idfv': idfv,
+        'model': model,
+        'osVersion': osVersion,
+        'timezone': timezone,
+        'locale': locale,
+        'userAgent': userAgent,
+        'timestamp': timestamp,
+      };
 
   @override
   String toString() => 'SDKFingerprint('

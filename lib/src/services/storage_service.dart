@@ -166,7 +166,8 @@ class StorageService {
       final eventsJson = existing.map((e) => jsonEncode(e.toJson())).toList();
       await prefs.setStringList(_keyFailedEvents, eventsJson);
 
-      SmartLinkLogger.debug('Saved ${events.length} failed events (total: ${existing.length})');
+      SmartLinkLogger.debug(
+          'Saved ${events.length} failed events (total: ${existing.length})');
     } catch (e) {
       SmartLinkLogger.error('Failed to save failed events', e);
     }
@@ -216,7 +217,8 @@ class StorageService {
   Future<void> markAsLaunched() async {
     final prefs = await _preferences;
     await prefs.setBool(_keyFirstLaunch, true);
-    await prefs.setString(_keyInstallTimestamp, DateTime.now().toIso8601String());
+    await prefs.setString(
+        _keyInstallTimestamp, DateTime.now().toIso8601String());
     SmartLinkLogger.info('First launch completed, marked as launched');
   }
 

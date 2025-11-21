@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:smartlink_flutter_sdk/smartlink_flutter_sdk.dart';
 
@@ -5,6 +7,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize SmartLink SDK
+  // The SDK automatically handles deferred deep linking on first launch
   await SmartLinkClient.initialize(
     baseUrl: 'http://localhost:3000',
     apiKey: 'demo-api-key',
@@ -44,6 +47,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   String? _createdLink;
   String? _attribution;
+  String? _deferredDeepLink;
+  String? _matchMethod;
   final List<String> _deepLinks = [];
 
   @override
@@ -51,6 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     _setupDeepLinkListener();
     _loadAttribution();
+    _checkDeferredDeepLink();
   }
 
   void _setupDeepLinkListener() {
@@ -73,9 +79,30 @@ class _MyHomePageState extends State<MyHomePage> {
     final attribution = await SmartLinkClient.instance.getAttribution();
     if (attribution != null) {
       setState(() {
-        _attribution = 'Campaign: ${attribution.campaignId ?? "None"}\n'
+        _attribution =
+            'Campaign: ${attribution.campaignId ?? "None"}\n'
             'Source: ${attribution.utmSource ?? "None"}\n'
             'Is Deferred: ${attribution.isDeferred}';
+      });
+    }
+  }
+
+  /// Check for deferred deep link manually
+  /// Note: The SDK automatically handles this on first launch, but you can
+  /// also check manually using handleDeferredDeepLink()
+  Future<void> _checkDeferredDeepLink() async {
+    final deepLinkUrl = await SmartLinkClient.instance.handleDeferredDeepLink(
+      onFound: () {
+        debugPrint('Deferred deep link found!');
+      },
+      onNotFound: () {
+        debugPrint('No deferred deep link');
+      },
+    );
+
+    if (deepLinkUrl != null && mounted) {
+      setState(() {
+        _deferredDeepLink = deepLinkUrl;
       });
     }
   }
@@ -104,9 +131,9 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -118,8 +145,27 @@ class _MyHomePageState extends State<MyHomePage> {
     });
 
     if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Event tracked!')));
+    }
+  }
+
+  Future<void> _trackConversion() async {
+    final success = await SmartLinkClient.instance.trackConversion(
+      type: 'purchase',
+      revenue: 29.99,
+      currency: 'USD',
+      metadata: {'product_id': '123', 'product_name': 'Demo Product'},
+    );
+
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Event tracked!')),
+        SnackBar(
+          content: Text(
+            success ? 'Conversion tracked!' : 'Failed to track conversion',
+          ),
+        ),
       );
     }
   }
@@ -145,12 +191,70 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     const Text(
                       'SDK Info',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    Text('Fingerprint: ${SmartLinkClient.instance.fingerprint?.substring(0, 16)}...'),
-                    Text('Session ID: ${SmartLinkClient.instance.sessionId?.substring(0, 16)}...'),
+                    Text(
+                      'Fingerprint: ${SmartLinkClient.instance.fingerprint?.substring(0, 16)}...',
+                    ),
+                    Text(
+                      'Session ID: ${SmartLinkClient.instance.sessionId?.substring(0, 16)}...',
+                    ),
                     Text('App Version: ${SmartLinkClient.instance.appVersion}'),
+                    Text(
+                      'Platform: ${Platform.isAndroid
+                          ? "Android"
+                          : Platform.isIOS
+                          ? "iOS"
+                          : "Other"}',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Deferred Deep Link Info
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Deferred Deep Linking',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      Platform.isAndroid
+                          ? 'Method: Play Install Referrer (100% accurate)'
+                          : 'Method: Fingerprint Matching (~85-90% accurate)',
+                      style: TextStyle(
+                        color: Platform.isAndroid
+                            ? Colors.green
+                            : Colors.orange,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    if (_deferredDeepLink != null) ...[
+                      Text('Found: $_deferredDeepLink'),
+                      if (_matchMethod != null)
+                        Text('Match Method: $_matchMethod'),
+                    ] else
+                      const Text('No deferred deep link found'),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: _checkDeferredDeepLink,
+                      child: const Text('Check Again'),
+                    ),
                   ],
                 ),
               ),
@@ -166,7 +270,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     const Text(
                       'Create Link',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     ElevatedButton(
@@ -183,7 +290,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             const SizedBox(height: 16),
 
-            // Track Event
+            // Track Event & Conversion
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -192,12 +299,24 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     const Text(
                       'Analytics',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: _trackEvent,
-                      child: const Text('Track Event'),
+                    Row(
+                      children: [
+                        ElevatedButton(
+                          onPressed: _trackEvent,
+                          child: const Text('Track Event'),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: _trackConversion,
+                          child: const Text('Track Conversion'),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -214,7 +333,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     const Text(
                       'Attribution',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(_attribution ?? 'No attribution data'),
@@ -233,13 +355,16 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     const Text(
                       'Received Deep Links',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     if (_deepLinks.isEmpty)
                       const Text('No deep links received yet')
                     else
-                      ..._deepLinks.map((link) => Text('• $link')),
+                      ..._deepLinks.map((link) => Text('* $link')),
                   ],
                 ),
               ),

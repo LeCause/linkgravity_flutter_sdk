@@ -53,9 +53,11 @@ export 'src/models/attribution.dart';
 export 'src/models/analytics_event.dart';
 export 'src/models/deep_link_data.dart';
 export 'src/models/deep_link_match.dart';
+export 'src/models/deferred_link_response.dart';
 
 // Services (for advanced usage)
 export 'src/services/api_service.dart' show ApiException;
+export 'src/services/install_referrer_service.dart';
 
 // Utilities
 export 'src/utils/logger.dart' show LogLevel;

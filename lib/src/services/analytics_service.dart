@@ -88,9 +88,10 @@ class AnalyticsService {
       (List<ConnectivityResult> results) {
         final wasOffline = !_isOnline;
         _isOnline = results.isNotEmpty &&
-                    results.any((result) => result != ConnectivityResult.none);
+            results.any((result) => result != ConnectivityResult.none);
 
-        SmartLinkLogger.debug('Connectivity changed: ${_isOnline ? "online" : "offline"}');
+        SmartLinkLogger.debug(
+            'Connectivity changed: ${_isOnline ? "online" : "offline"}');
 
         // If we just came online, retry failed events
         if (wasOffline && _isOnline) {
@@ -103,8 +104,9 @@ class AnalyticsService {
     // Check initial connectivity
     _connectivity.checkConnectivity().then((results) {
       _isOnline = results.isNotEmpty &&
-                  results.any((result) => result != ConnectivityResult.none);
-      SmartLinkLogger.debug('Initial connectivity: ${_isOnline ? "online" : "offline"}');
+          results.any((result) => result != ConnectivityResult.none);
+      SmartLinkLogger.debug(
+          'Initial connectivity: ${_isOnline ? "online" : "offline"}');
     });
   }
 
@@ -114,7 +116,8 @@ class AnalyticsService {
     Map<String, dynamic>? properties,
   ]) async {
     if (!enabled) {
-      SmartLinkLogger.debug('Analytics disabled, event not tracked: $eventName');
+      SmartLinkLogger.debug(
+          'Analytics disabled, event not tracked: $eventName');
       return;
     }
 
@@ -129,7 +132,8 @@ class AnalyticsService {
     );
 
     _eventQueue.add(event);
-    SmartLinkLogger.debug('Event tracked: $eventName (queue size: ${_eventQueue.length})');
+    SmartLinkLogger.debug(
+        'Event tracked: $eventName (queue size: ${_eventQueue.length})');
 
     // Check if we should flush
     if (_eventQueue.length >= batchSize) {
@@ -187,7 +191,8 @@ class AnalyticsService {
         await _storage.saveFailedEvents(events);
         SmartLinkLogger.info('Saved ${events.length} events to offline queue');
       } else {
-        SmartLinkLogger.warning('Offline queue disabled, ${events.length} events lost');
+        SmartLinkLogger.warning(
+            'Offline queue disabled, ${events.length} events lost');
       }
     }
   }
@@ -214,7 +219,8 @@ class AnalyticsService {
       if (_isOnline) {
         await _api.sendBatch(failed);
         await _storage.clearFailedEvents();
-        SmartLinkLogger.info('Successfully sent ${failed.length} failed events');
+        SmartLinkLogger.info(
+            'Successfully sent ${failed.length} failed events');
       } else {
         SmartLinkLogger.debug('Still offline, failed events remain queued');
       }

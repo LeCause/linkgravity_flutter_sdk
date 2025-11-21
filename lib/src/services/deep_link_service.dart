@@ -63,7 +63,8 @@ class DeepLinkService {
       _initialized = true;
       SmartLinkLogger.info('Deep link service initialized successfully');
     } catch (e, stackTrace) {
-      SmartLinkLogger.error('Failed to initialize deep link service', e, stackTrace);
+      SmartLinkLogger.error(
+          'Failed to initialize deep link service', e, stackTrace);
       rethrow;
     }
   }

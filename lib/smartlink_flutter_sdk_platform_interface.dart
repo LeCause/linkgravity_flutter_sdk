@@ -8,7 +8,8 @@ abstract class SmartlinkFlutterSdkPlatform extends PlatformInterface {
 
   static final Object _token = Object();
 
-  static SmartlinkFlutterSdkPlatform _instance = MethodChannelSmartlinkFlutterSdk();
+  static SmartlinkFlutterSdkPlatform _instance =
+      MethodChannelSmartlinkFlutterSdk();
 
   /// The default instance of [SmartlinkFlutterSdkPlatform] to use.
   ///

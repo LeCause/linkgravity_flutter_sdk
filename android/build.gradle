@@ -48,6 +48,9 @@ android {
     }
 
     dependencies {
+        // Google Play Install Referrer API for deterministic deferred deep linking (LINK-005)
+        implementation("com.android.installreferrer:installreferrer:2.2")
+
         testImplementation("org.jetbrains.kotlin:kotlin-test")
         testImplementation("org.mockito:mockito-core:5.0.0")
     }

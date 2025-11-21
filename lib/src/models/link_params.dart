@@ -30,7 +30,8 @@ class DeepLinkConfig {
   Map<String, dynamic> toJson() {
     return {
       if (iosAppStoreUrl != null) 'iosAppStoreUrl': iosAppStoreUrl,
-      if (androidPlayStoreUrl != null) 'androidPlayStoreUrl': androidPlayStoreUrl,
+      if (androidPlayStoreUrl != null)
+        'androidPlayStoreUrl': androidPlayStoreUrl,
       if (fallbackUrl != null) 'fallbackUrl': fallbackUrl,
       if (deepLinkPath != null) 'deepLinkPath': deepLinkPath,
       if (params != null) 'params': params,
@@ -144,11 +145,11 @@ class LinkParams {
           : null,
       metadata: json['metadata'] as Map<String, dynamic>?,
       deepLinkConfig: json['deepLinkConfig'] != null
-          ? DeepLinkConfig.fromJson(json['deepLinkConfig'] as Map<String, dynamic>)
+          ? DeepLinkConfig.fromJson(
+              json['deepLinkConfig'] as Map<String, dynamic>)
           : null,
-      tags: json['tags'] != null
-          ? List<String>.from(json['tags'] as List)
-          : null,
+      tags:
+          json['tags'] != null ? List<String>.from(json['tags'] as List) : null,
       campaignId: json['campaignId'] as String?,
       utmParams: json['utmParams'] != null
           ? Map<String, String>.from(json['utmParams'] as Map)

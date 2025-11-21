@@ -38,6 +38,9 @@ dependencies:
   # Plugin platform interface
   plugin_platform_interface: ^2.1.0
 
+  # Note: Android Play Install Referrer is now handled natively (LINK-005)
+  # The native implementation uses com.android.installreferrer:installreferrer:2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
