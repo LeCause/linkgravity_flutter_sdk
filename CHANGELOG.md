@@ -5,6 +5,41 @@ All notable changes to the SmartLink Flutter SDK will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-11-21
+
+### Fixed
+- **[AUTH-001] Authentication Header Format**: Fixed SDK authentication to use `Authorization: Bearer` header format instead of `X-API-Key` header. This aligns with backend API requirements and industry standards.
+- **[PARSE-001] Response Parsing**: Updated response parsing to handle wrapped response format `{ success, match: {...} }` from backend while maintaining backward compatibility with flat responses.
+- **[TIMEOUT-001] Request Timeout**: Reduced default request timeout from 30 seconds to 15 seconds for better user experience and faster error detection.
+
+### Improved
+- **[RETRY-001] Network Resilience**: Added automatic retry logic with exponential backoff for deferred deep link lookups:
+  - Up to 3 attempts with exponential backoff (2s, 4s, 8s delays)
+  - Does NOT retry on client errors (400, 404)
+  - Retries on network timeouts and server errors (500+)
+  - 10-second timeout per attempt
+- **Response Handling**: Enhanced `DeferredLinkResponse` and `DeepLinkMatch` models to correctly parse both wrapped and flat response formats.
+- **API Service**: Exposed `headers` property for testing purposes (was previously private).
+
+### Tests
+- Added comprehensive unit tests for authentication header format
+- Added tests for response parsing (both wrapped and flat formats)
+- Added tests for retry logic behavior and exponential backoff calculations
+- All existing tests continue to pass (34 tests total)
+
+### Breaking Changes
+- None (all changes are backward compatible)
+
+### Dependencies
+- No new dependencies added
+- No dependency version changes
+
+### Migration Guide
+No action required. Update to version 1.1.0 for:
+- Correct backend authentication
+- Better network reliability with automatic retries
+- Improved response time with reduced timeout
+
 ## [1.0.0] - 2025-11-19
 
 ### Added

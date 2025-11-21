@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:async';
+import 'dart:math';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
@@ -32,6 +34,88 @@ class DeferredDeepLinkService {
     required this.fingerprintService,
     InstallReferrerService? installReferrerService,
   }) : _installReferrer = installReferrerService ?? InstallReferrerService();
+
+  /// Match deferred deep link with retry logic and exponential backoff
+  ///
+  /// Retries on network failures with exponential backoff:
+  /// - Attempt 1: Immediate
+  /// - Attempt 2: After 2 seconds
+  /// - Attempt 3: After 4 seconds (total 6s delay)
+  ///
+  /// Does NOT retry on:
+  /// - 404 Not Found (no deferred link exists)
+  /// - 400 Bad Request (invalid data)
+  ///
+  /// Strategy:
+  /// 1. Android: Try Play Install Referrer first (deterministic, 100% accuracy)
+  /// 2. If referrer fails: Fall back to fingerprint matching (probabilistic, ~85-90%)
+  /// 3. iOS: Always use fingerprint matching
+  ///
+  /// Returns [DeferredLinkResponse] if a match is found, null otherwise.
+  Future<DeferredLinkResponse?> matchDeferredDeepLinkWithRetry() async {
+    const maxAttempts = 3;
+    const timeout = Duration(seconds: 10);
+
+    for (int attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        SmartLinkLogger.debug(
+            'Deferred link lookup attempt ${attempt + 1}/$maxAttempts');
+
+        final result =
+            await matchDeferredDeepLink().timeout(timeout);
+
+        if (result != null) {
+          SmartLinkLogger.info(
+              '✅ Deferred link found on attempt ${attempt + 1}');
+          return result;
+        }
+
+        // No match found, but request succeeded
+        return null;
+
+      } on TimeoutException catch (e) {
+        SmartLinkLogger.warning(
+            'Deferred link lookup timeout on attempt ${attempt + 1}', e);
+
+        // Retry with exponential backoff
+        if (attempt < maxAttempts - 1) {
+          final delaySeconds = pow(2, attempt + 1).toInt(); // 2, 4, 8 seconds
+          SmartLinkLogger.debug('Retrying in $delaySeconds seconds...');
+          await Future.delayed(Duration(seconds: delaySeconds));
+        }
+
+      } on ApiException catch (e) {
+        // Don't retry on client errors (400, 404, etc.)
+        if (e.statusCode != null && e.statusCode! >= 400 && e.statusCode! < 500) {
+          SmartLinkLogger.debug(
+              'Client error ${e.statusCode}, not retrying');
+          return null;
+        }
+
+        // Retry on server errors (500+)
+        SmartLinkLogger.warning(
+            'Server error ${e.statusCode} on attempt ${attempt + 1}', e);
+
+        if (attempt < maxAttempts - 1) {
+          final delaySeconds = pow(2, attempt + 1).toInt();
+          await Future.delayed(Duration(seconds: delaySeconds));
+        }
+
+      } catch (e) {
+        // Unknown error - retry
+        SmartLinkLogger.error('Unexpected error on attempt ${attempt + 1}', e);
+
+        if (attempt < maxAttempts - 1) {
+          final delaySeconds = pow(2, attempt + 1).toInt();
+          await Future.delayed(Duration(seconds: delaySeconds));
+        }
+      }
+    }
+
+    SmartLinkLogger.warning(
+        'Failed to match deferred link after $maxAttempts attempts');
+    return null;
+  }
 
   /// Match deferred deep link using best available method
   ///

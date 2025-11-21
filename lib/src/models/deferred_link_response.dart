@@ -48,19 +48,28 @@ class DeferredLinkResponse {
   });
 
   /// Create from JSON (API response)
+  ///
+  /// Handles both wrapped and flat response formats:
+  /// - Wrapped: { success: true, match: { linkId, deepLinkData, ... } }
+  /// - Flat: { linkId, deepLinkData, ... } (backward compatible)
   factory DeferredLinkResponse.fromJson(Map<String, dynamic> json) {
+    // Extract data from either wrapped or flat response
+    final data = json.containsKey('match') && json['match'] != null
+        ? json['match'] as Map<String, dynamic>
+        : json;
+
     return DeferredLinkResponse(
-      success: json['success'] ?? false,
-      alreadyClaimed: json['alreadyClaimed'],
+      success: json['success'] ?? true,
+      alreadyClaimed: data['alreadyClaimed'] as bool?,
       claimedAt:
-          json['claimedAt'] != null ? DateTime.parse(json['claimedAt']) : null,
-      deepLinkData: json['deepLinkData'] as Map<String, dynamic>?,
-      linkId: json['linkId'] as String?,
-      shortCode: json['shortCode'] as String?,
-      platform: json['platform'] as String?,
-      matchMethod: json['matchMethod'] as String?,
-      confidence: json['confidence'] as String?,
-      score: json['score'] as int?,
+          data['claimedAt'] != null ? DateTime.parse(data['claimedAt'] as String) : null,
+      deepLinkData: data['deepLinkData'] as Map<String, dynamic>?,
+      linkId: data['linkId'] as String?,
+      shortCode: data['shortCode'] as String?,
+      platform: data['platform'] as String?,
+      matchMethod: data['matchMethod'] as String?,
+      confidence: data['confidence'] as String?,
+      score: data['score'] as int?,
     );
   }
 

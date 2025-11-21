@@ -227,7 +227,8 @@ class SmartLinkClient {
       );
 
       // Try to match using best available method (referrer on Android, fingerprint on iOS)
-      final match = await deferredService.matchDeferredDeepLink();
+      // Uses retry logic with exponential backoff for better reliability
+      final match = await deferredService.matchDeferredDeepLinkWithRetry();
 
       if (match != null && match.success && match.deepLinkUrl != null) {
         SmartLinkLogger.info('✅ Deferred deep link found!');

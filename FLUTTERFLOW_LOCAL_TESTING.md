@@ -36,20 +36,28 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
    - Should return: `{"status":"ok"}`
 
 ### SDK Setup
-1. **Build the SDK package**:
+1. **Verify SDK is published** (if using GitHub dependency):
+   - SDK is automatically fetched from GitHub: `https://github.com/LeCause/smart-link-flutter-sdk.git`
+   - No manual setup required if using Git dependency
+   - FlutterFlow will handle fetching and building
+
+2. **For Local Development** (if you want to modify SDK code):
    ```bash
-   cd smartlink_flutter_sdk
+   cd smart-link-flutter-sdk
    flutter pub get
    flutter test  # Verify all tests pass
    ```
-
-2. **Note the SDK path**: `C:\smartlink\smartlink\smartlink_flutter_sdk`
+   Then update pubspec.yaml to use path dependency:
+   ```yaml
+   smartlink_flutter_sdk:
+     path: /absolute/path/to/smart-link-flutter-sdk
+   ```
 
 ---
 
 ## 📱 FlutterFlow Configuration
 
-### Step 1: Add Local SDK to FlutterFlow
+### Step 1: Add SDK to FlutterFlow
 
 1. **Open your FlutterFlow project**
 
@@ -57,19 +65,27 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
 
 3. **Navigate to Dependencies** → **pubspec.yaml**
 
-4. **Add SDK as path dependency**:
+4. **Add SDK as Git dependency**:
    ```yaml
    dependencies:
      smartlink_flutter_sdk:
-       path: C:/smartlink/smartlink/smartlink_flutter_sdk
+       git:
+         url: https://github.com/LeCause/smart-link-flutter-sdk.git
+         ref: main
    ```
 
-   **Important Notes**:
-   - Use forward slashes `/` (even on Windows)
-   - Use absolute path
-   - FlutterFlow will copy this to the generated Flutter project
+   **Configuration Options**:
+   - `ref: main` - Uses the latest main branch (recommended for testing)
+   - `ref: v1.1.0` - Use specific version tag (for stable releases)
+   - `ref: develop` - Use development branch (if available)
 
-5. **Click "Save"** and wait for dependencies to resolve
+   **Important Notes**:
+   - Ensure you have internet access for GitHub
+   - FlutterFlow will fetch and build from GitHub automatically
+   - First build may take longer due to cloning the repository
+   - For local development, use path dependency instead: `path: /path/to/smart-link-flutter-sdk`
+
+5. **Click "Save"** and wait for dependencies to resolve (this may take 1-2 minutes)
 
 ### Step 2: Create Hidden Page
 
@@ -104,6 +120,7 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
            enableAnalytics: true,
            enableDeepLinking: true,
            logLevel: LogLevel.debug,
+           requestTimeout: Duration(seconds: 15),  // Configurable timeout (default: 15s)
          ),
        );
 
@@ -117,6 +134,12 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
    ```
 
 4. **Important**: Replace `YOUR_LOCAL_IP` with your actual local IP (e.g., `192.168.1.100`)
+
+5. **SDK Version 1.1.0+**: The SDK now includes:
+   - ✅ Automatic retry logic with exponential backoff for deferred deep links
+   - ✅ Reduced timeout (15s default, configurable)
+   - ✅ Proper `Authorization: Bearer` header format
+   - Better network resilience for unreliable connections
 
 ### Step 4: Setup Deep Link Handler
 
@@ -392,6 +415,22 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
 - Fingerprinting might not match if using emulator/simulator
 - Test on **real device** for best results
 - Check backend logs for fingerprint match
+- **SDK 1.1.0+**: SDK automatically retries with exponential backoff (up to 3 attempts with 2s, 4s, 8s delays) - no action needed, just wait
+
+#### ℹ️ SDK 1.1.0 Improvements for Testing
+
+**Better Network Resilience**:
+- Automatic retry logic: Up to 3 attempts for deferred link lookups
+- Exponential backoff: 2s, 4s, 8s delays between retries
+- Does NOT retry on 404/400 errors (saves time)
+- Retries on network timeouts and server errors
+- Reduced default timeout: 15 seconds (faster feedback)
+
+**Benefits for Testing**:
+- More reliable in testing environments with fluctuating network
+- SDK automatically handles temporary network hiccups
+- Faster error detection with 15-second timeout
+- Proper `Authorization: Bearer` header authentication
 
 ---
 
@@ -421,22 +460,30 @@ Testing:
 
 Once local testing works:
 
-1. **Production Setup**:
+1. **SDK Updates**:
+   - SmartLink SDK is maintained on GitHub: `https://github.com/LeCause/smart-link-flutter-sdk`
+   - FlutterFlow will auto-fetch latest from GitHub
+   - To use specific version: Change `ref: main` to `ref: v1.1.0` (or any version tag)
+   - To use development builds: Change `ref: main` to `ref: develop`
+
+2. **Production Setup**:
    - Deploy backend to cloud (e.g., Railway, Render, AWS)
-   - Update `baseUrl` in FlutterFlow
+   - Update `baseUrl` in FlutterFlow to production backend
+   - Update `apiKey` to production key
    - Configure Universal Links (iOS) and App Links (Android)
    - Add `.well-known/apple-app-site-association`
    - Add `.well-known/assetlinks.json`
 
-2. **App Store / Play Store**:
+3. **App Store / Play Store**:
    - Update app with production deep link config
    - Test with TestFlight (iOS) or Internal Testing (Android)
    - Submit to stores
 
-3. **Analytics**:
-   - Track link clicks
-   - Monitor deferred link attribution
+4. **Analytics & Monitoring**:
+   - Track link clicks and conversion
+   - Monitor deferred link attribution success rates
    - Analyze campaign performance
+   - Set up alerts for SDK errors
 
 ---
 
@@ -453,8 +500,20 @@ Once local testing works:
 **Q: Can I use `localhost`?**
 A: No, use your local IP address (e.g., `192.168.1.100`) so mobile devices can connect.
 
-**Q: Do I need to publish the SDK to pub.dev?**
-A: No, you're using a local path dependency in FlutterFlow.
+**Q: Where is the SDK hosted?**
+A: SmartLink SDK is hosted on GitHub: `https://github.com/LeCause/smart-link-flutter-sdk`
+   FlutterFlow automatically fetches from GitHub when using Git dependency.
+
+**Q: Can I use a different version of the SDK?**
+A: Yes! Update the `ref` in pubspec.yaml:
+   - `ref: main` - Latest development version
+   - `ref: v1.1.0` - Specific released version
+   - `ref: develop` - Development branch
+
+**Q: How do I switch between GitHub and local development?**
+A:
+   - **GitHub (Remote)**: `git: { url: https://github.com/LeCause/smart-link-flutter-sdk.git, ref: main }`
+   - **Local (Development)**: `path: /absolute/path/to/smart-link-flutter-sdk`
 
 **Q: Can I test in FlutterFlow's Test Mode?**
 A: Deep linking won't work in Test Mode. You must download code and build locally.

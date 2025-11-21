@@ -39,15 +39,24 @@ class DeepLinkMatch {
       confidence == 'high' || confidence == 'medium';
 
   /// Create from JSON (API response)
+  ///
+  /// Handles both wrapped and flat response formats:
+  /// - Wrapped: { success: true, match: { found, confidence, score, ... } }
+  /// - Flat: { found, confidence, score, ... } (backward compatible)
   factory DeepLinkMatch.fromJson(Map<String, dynamic> json) {
+    // Extract data from either wrapped or flat response
+    final data = json.containsKey('match') && json['match'] != null
+        ? json['match'] as Map<String, dynamic>
+        : json;
+
     return DeepLinkMatch(
-      found: json['found'] as bool? ?? false,
-      confidence: json['confidence'] as String? ?? 'none',
-      score: json['score'] as int? ?? 0,
-      deepLinkUrl: json['deepLinkUrl'] as String?,
-      linkId: json['linkId'] as String?,
+      found: data['found'] as bool? ?? false,
+      confidence: data['confidence'] as String? ?? 'none',
+      score: data['score'] as int? ?? 0,
+      deepLinkUrl: data['deepLinkUrl'] as String?,
+      linkId: data['linkId'] as String?,
       metadata: DeepLinkMatchMetadata.fromJson(
-        json['metadata'] as Map<String, dynamic>? ?? {},
+        data['metadata'] as Map<String, dynamic>? ?? {},
       ),
     );
   }

@@ -36,18 +36,18 @@ class ApiService {
     required this.baseUrl,
     this.apiKey,
     http.Client? client,
-    this.timeout = const Duration(seconds: 30),
+    this.timeout = const Duration(seconds: 15),
   }) : client = client ?? http.Client();
 
   /// Get default headers for API requests
-  Map<String, String> get _headers {
+  Map<String, String> get headers {
     final headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
 
     if (apiKey != null) {
-      headers['X-API-Key'] = apiKey!;
+      headers['Authorization'] = 'Bearer ${apiKey!}';
     }
 
     return headers;
@@ -75,7 +75,7 @@ class ApiService {
       SmartLinkLogger.debug('GET $uri');
 
       final response =
-          await client.get(uri, headers: _headers).timeout(timeout);
+          await client.get(uri, headers: headers).timeout(timeout);
 
       return _handleResponse(response);
     } catch (e) {
@@ -96,7 +96,7 @@ class ApiService {
       final response = await client
           .post(
             uri,
-            headers: _headers,
+            headers: headers,
             body: jsonEncode(body),
           )
           .timeout(timeout);
@@ -119,7 +119,7 @@ class ApiService {
       final response = await client
           .put(
             uri,
-            headers: _headers,
+            headers: headers,
             body: jsonEncode(body),
           )
           .timeout(timeout);
@@ -139,7 +139,7 @@ class ApiService {
       SmartLinkLogger.debug('DELETE $uri');
 
       final response =
-          await client.delete(uri, headers: _headers).timeout(timeout);
+          await client.delete(uri, headers: headers).timeout(timeout);
 
       _handleResponse(response);
     } catch (e) {
