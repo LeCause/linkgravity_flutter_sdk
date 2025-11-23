@@ -21,6 +21,9 @@ class DeepLinkService {
   /// Get initial deep link
   DeepLinkData? get initialLink => _initialLink;
 
+  /// Set initial deep link (used for deferred deep links)
+  set initialLink(DeepLinkData? link) => _initialLink = link;
+
   /// Whether the service has been initialized
   bool _initialized = false;
 

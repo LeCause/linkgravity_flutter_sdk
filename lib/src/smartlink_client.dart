@@ -262,6 +262,11 @@ class SmartLinkClient {
         // Emit deep link event
         final uri = Uri.parse(match.deepLinkUrl!);
         final deepLink = _deepLink.parseLink(uri);
+
+        // Set as initial link so it's available via initialDeepLink getter
+        // This allows the app to check for deferred links after initialization
+        _deepLink.initialLink = deepLink;
+
         _deepLink.linkController.add(deepLink);
       } else {
         SmartLinkLogger.debug('No deferred deep link found');
