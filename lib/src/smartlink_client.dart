@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'models/link.dart';
 import 'models/link_params.dart';
@@ -7,6 +8,7 @@ import 'models/attribution.dart';
 import 'models/deep_link_data.dart';
 import 'models/analytics_event.dart';
 import 'models/utm_params.dart';
+import 'models/route_action.dart';
 import 'services/api_service.dart';
 import 'services/storage_service.dart';
 import 'services/fingerprint_service.dart';
@@ -81,6 +83,12 @@ class SmartLinkClient {
 
   /// App version
   String? _appVersion;
+
+  // Route registration fields
+  BuildContext? _routeContext;
+  Map<String, RouteAction Function(DeepLinkData)>? _registeredRoutes;
+  StreamSubscription<DeepLinkData>? _routeStreamSubscription;
+  bool _matchPrefix = true;
 
   /// Private constructor
   SmartLinkClient._({
@@ -385,6 +393,114 @@ class SmartLinkClient {
 
   /// Get initial deep link (if app was opened via deep link)
   DeepLinkData? get initialDeepLink => _deepLink.initialLink;
+
+  /// Register deep link routes for automatic navigation
+  ///
+  /// This is the recommended way to handle deep links in FlutterFlow apps.
+  /// It automatically handles both cold start (initial link) and warm start
+  /// (incoming links while app is running) scenarios.
+  ///
+  /// The method:
+  /// 1. Stores the context and route map for future use
+  /// 2. Immediately checks for initial deep link (cold start)
+  /// 3. Subscribes to incoming deep links (warm start)
+  /// 4. Matches routes and executes corresponding actions
+  ///
+  /// Parameters:
+  /// - [context]: BuildContext for navigation (typically from first page)
+  /// - [routes]: Map of route patterns to RouteAction builders
+  /// - [matchPrefix]: If true, matches prefixes (e.g., "/product" matches "/product/123")
+  ///                  If false, requires exact match (default: true)
+  ///
+  /// Example:
+  /// ```dart
+  /// SmartLinkClient.instance.registerRoutes(
+  ///   context: context,
+  ///   routes: {
+  ///     '/product': (deepLink) => RouteAction.goNamed(
+  ///       'ProductPage',
+  ///       extra: {'id': deepLink.getParam('id')},
+  ///     ),
+  ///     '/profile': (deepLink) => RouteAction.custom((ctx) {
+  ///       // Custom logic
+  ///       ctx.pushNamed('ProfilePage');
+  ///     }),
+  ///   },
+  /// );
+  /// ```
+  void registerRoutes({
+    required BuildContext context,
+    required Map<String, RouteAction Function(DeepLinkData)> routes,
+    bool matchPrefix = true,
+  }) {
+    _ensureInitialized();
+
+    // Store for future use
+    _routeContext = context;
+    _registeredRoutes = routes;
+    _matchPrefix = matchPrefix;
+
+    SmartLinkLogger.info('Registering ${routes.length} deep link routes...');
+
+    // Handle initial deep link (cold start)
+    final initialLink = _deepLink.initialLink;
+    if (initialLink != null) {
+      SmartLinkLogger.info('Processing initial deep link: ${initialLink.path}');
+      _handleRouteMatch(initialLink);
+      // Clear initial link after processing to prevent duplicate handling
+      _deepLink.initialLink = null;
+    }
+
+    // Listen for future deep links (warm start)
+    _routeStreamSubscription?.cancel();
+    _routeStreamSubscription = _deepLink.linkStream.listen(
+      _handleRouteMatch,
+      onError: (error, stackTrace) {
+        SmartLinkLogger.error('Deep link stream error', error, stackTrace);
+      },
+    );
+
+    SmartLinkLogger.info('✅ Deep link routes registered successfully');
+  }
+
+  /// Handle route matching for incoming deep links
+  ///
+  /// This is called automatically by [registerRoutes] when a deep link is received.
+  void _handleRouteMatch(DeepLinkData deepLink) {
+    if (_routeContext == null || _registeredRoutes == null) {
+      SmartLinkLogger.warning(
+          'Route context not available, cannot handle deep link');
+      return;
+    }
+
+    SmartLinkLogger.debug('Attempting to match route for: ${deepLink.path}');
+
+    for (final entry in _registeredRoutes!.entries) {
+      final routePattern = entry.key;
+      final actionBuilder = entry.value;
+
+      bool matches = _matchPrefix
+          ? deepLink.path.startsWith(routePattern)
+          : deepLink.path == routePattern;
+
+      if (matches) {
+        SmartLinkLogger.info(
+            '✅ Matched route: $routePattern -> ${deepLink.path}');
+
+        try {
+          final action = actionBuilder(deepLink);
+          action.execute(_routeContext!);
+        } catch (e, stackTrace) {
+          SmartLinkLogger.error(
+              'Error executing route action for $routePattern', e, stackTrace);
+        }
+
+        return; // First match wins
+      }
+    }
+
+    SmartLinkLogger.warning('⚠️ No route matched for: ${deepLink.path}');
+  }
 
   // ============================================================================
   // ANALYTICS
@@ -774,6 +890,11 @@ class SmartLinkClient {
     await _analytics.dispose();
     _deepLink.dispose();
     _api.dispose();
+
+    // Clean up route registration
+    _routeStreamSubscription?.cancel();
+    _routeContext = null;
+    _registeredRoutes = null;
 
     _initialized = false;
     _instance = null;
