@@ -1,6 +1,6 @@
-# smartlink_flutter_sdk_example
+# linkgravity_flutter_sdk_example
 
-Demonstrates how to use the smartlink_flutter_sdk plugin.
+Demonstrates how to use the linkgravity_flutter_sdk plugin.
 
 ## Getting Started
 

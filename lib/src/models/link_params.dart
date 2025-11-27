@@ -15,7 +15,7 @@ class DeepLinkConfig {
   /// Additional deep link parameters
   final Map<String, String>? params;
 
-  /// Custom URL scheme (e.g., "smartlink", "myapp")
+  /// Custom URL scheme (e.g., "linkgravity", "myapp")
   final String? customScheme;
 
   DeepLinkConfig({
@@ -53,7 +53,7 @@ class DeepLinkConfig {
   }
 }
 
-/// Parameters for creating a new SmartLink
+/// Parameters for creating a new LinkGravity link
 class LinkParams {
   /// Original long URL to be shortened
   final String longUrl;

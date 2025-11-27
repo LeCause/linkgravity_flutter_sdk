@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smartlink_flutter_sdk/src/models/deferred_link_response.dart';
+import 'package:linkgravity_flutter_sdk/src/models/deferred_link_response.dart';
 
 void main() {
   group('DeferredLinkResponse Parsing', () {

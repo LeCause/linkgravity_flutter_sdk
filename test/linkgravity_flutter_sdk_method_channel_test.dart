@@ -1,12 +1,12 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smartlink_flutter_sdk/smartlink_flutter_sdk_method_channel.dart';
+import 'package:linkgravity_flutter_sdk/linkgravity_flutter_sdk_method_channel.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  MethodChannelSmartlinkFlutterSdk platform = MethodChannelSmartlinkFlutterSdk();
-  const MethodChannel channel = MethodChannel('smartlink_flutter_sdk');
+  MethodChannelLinkGravityFlutterSdk platform = MethodChannelLinkGravityFlutterSdk();
+  const MethodChannel channel = MethodChannel('linkgravity_flutter_sdk');
 
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(

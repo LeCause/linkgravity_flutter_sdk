@@ -1,7 +1,7 @@
 # SDK-002-SDK: Flutter SDK API Compatibility Fixes & Enhancement
 
 ## Project
-SmartLink Flutter SDK (`C:\smartlink\smart-link-flutter-sdk`)
+LinkGravity Flutter SDK (`C:\linkgravity\linkgravity-flutter-sdk`)
 
 ## Story Type
 Bug Fix / Enhancement
@@ -117,13 +117,13 @@ Map<String, String> get _headers {
 ```dart
 // test/services/api_service_test.dart
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smartlink_flutter_sdk/src/services/api_service.dart';
+import 'package:linkgravity_flutter_sdk/src/services/api_service.dart';
 
 void main() {
   group('ApiService Authentication', () {
     test('should use Authorization Bearer header for API key', () {
       final apiService = ApiService(
-        baseUrl: 'https://api.smartlink.com',
+        baseUrl: 'https://api.linkgravity.com',
         apiKey: 'pk_test_123',
       );
 
@@ -135,7 +135,7 @@ void main() {
 
     test('should work without API key', () {
       final apiService = ApiService(
-        baseUrl: 'https://api.smartlink.com',
+        baseUrl: 'https://api.linkgravity.com',
       );
 
       final headers = apiService.headers;
@@ -158,7 +158,7 @@ void main() {
 final response = await _api.matchLink(fingerprintData);
 
 if (response != null) {
-  SmartLinkLogger.info('✅ Probabilistic match found via fingerprint');
+  LinkGravityLogger.info('✅ Probabilistic match found via fingerprint');
   return DeferredLinkResponse.fromJson({
     ...response,  // ❌ Assumes flat response
     'matchMethod': 'fingerprint',
@@ -174,9 +174,9 @@ if (response != null && response['success'] == true) {
   final match = response['match'];  // ✅ Extract match object
 
   if (match != null && match['found'] == true) {
-    SmartLinkLogger.info('✅ Probabilistic match found via fingerprint');
-    SmartLinkLogger.info('   Confidence: ${match['confidence']}');
-    SmartLinkLogger.info('   Score: ${match['score']}');
+    LinkGravityLogger.info('✅ Probabilistic match found via fingerprint');
+    LinkGravityLogger.info('   Confidence: ${match['confidence']}');
+    LinkGravityLogger.info('   Score: ${match['score']}');
 
     // Map to DeferredLinkResponse
     return DeferredLinkResponse(
@@ -194,7 +194,7 @@ if (response != null && response['success'] == true) {
   }
 }
 
-SmartLinkLogger.info('No deferred deep link found');
+LinkGravityLogger.info('No deferred deep link found');
 return null;
 ```
 
@@ -257,7 +257,7 @@ class DeepLinkMatch {
 ```dart
 // test/models/deep_link_match_test.dart
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smartlink_flutter_sdk/src/models/deep_link_match.dart';
+import 'package:linkgravity_flutter_sdk/src/models/deep_link_match.dart';
 
 void main() {
   group('DeepLinkMatch', () {
@@ -362,12 +362,12 @@ class DeferredDeepLinkService {
 
     for (int attempt = 0; attempt < maxAttempts; attempt++) {
       try {
-        SmartLinkLogger.debug('Deferred link lookup attempt ${attempt + 1}/$maxAttempts');
+        LinkGravityLogger.debug('Deferred link lookup attempt ${attempt + 1}/$maxAttempts');
 
         final result = await matchDeepLink().timeout(timeout);
 
         if (result != null) {
-          SmartLinkLogger.info('✅ Deferred link found on attempt ${attempt + 1}');
+          LinkGravityLogger.info('✅ Deferred link found on attempt ${attempt + 1}');
           return result;
         }
 
@@ -375,24 +375,24 @@ class DeferredDeepLinkService {
         return null;
 
       } on TimeoutException catch (e) {
-        SmartLinkLogger.warning('Deferred link lookup timeout on attempt ${attempt + 1}', e);
+        LinkGravityLogger.warning('Deferred link lookup timeout on attempt ${attempt + 1}', e);
 
         // Retry with exponential backoff
         if (attempt < maxAttempts - 1) {
           final delaySeconds = pow(2, attempt + 1).toInt(); // 2, 4, 8 seconds
-          SmartLinkLogger.debug('Retrying in $delaySeconds seconds...');
+          LinkGravityLogger.debug('Retrying in $delaySeconds seconds...');
           await Future.delayed(Duration(seconds: delaySeconds));
         }
 
       } on ApiException catch (e) {
         // Don't retry on client errors (400, 404, etc.)
         if (e.statusCode >= 400 && e.statusCode < 500) {
-          SmartLinkLogger.debug('Client error ${e.statusCode}, not retrying');
+          LinkGravityLogger.debug('Client error ${e.statusCode}, not retrying');
           return null;
         }
 
         // Retry on server errors (500+)
-        SmartLinkLogger.warning('Server error ${e.statusCode} on attempt ${attempt + 1}', e);
+        LinkGravityLogger.warning('Server error ${e.statusCode} on attempt ${attempt + 1}', e);
 
         if (attempt < maxAttempts - 1) {
           final delaySeconds = pow(2, attempt + 1).toInt();
@@ -401,7 +401,7 @@ class DeferredDeepLinkService {
 
       } catch (e) {
         // Unknown error - retry
-        SmartLinkLogger.error('Unexpected error on attempt ${attempt + 1}', e);
+        LinkGravityLogger.error('Unexpected error on attempt ${attempt + 1}', e);
 
         if (attempt < maxAttempts - 1) {
           final delaySeconds = pow(2, attempt + 1).toInt();
@@ -410,7 +410,7 @@ class DeferredDeepLinkService {
       }
     }
 
-    SmartLinkLogger.warning('Failed to match deferred link after $maxAttempts attempts');
+    LinkGravityLogger.warning('Failed to match deferred link after $maxAttempts attempts');
     return null;
   }
 
@@ -418,7 +418,7 @@ class DeferredDeepLinkService {
 }
 ```
 
-**Update SmartLinkClient** (`lib/src/smartlink_client.dart`):
+**Update LinkGravityClient** (`lib/src/linkgravity_client.dart`):
 
 Change from `matchDeepLink()` to `matchDeepLinkWithRetry()`:
 
@@ -427,11 +427,11 @@ Future<void> _handleDeferredDeepLink() async {
   final isFirstLaunch = await _storage.isFirstLaunch();
 
   if (!isFirstLaunch) {
-    SmartLinkLogger.debug('Not first launch, skipping deferred deep link check');
+    LinkGravityLogger.debug('Not first launch, skipping deferred deep link check');
     return;
   }
 
-  SmartLinkLogger.info('First launch detected, checking for deferred deep link...');
+  LinkGravityLogger.info('First launch detected, checking for deferred deep link...');
 
   try {
     final deferredService = DeferredDeepLinkService(
@@ -443,9 +443,9 @@ Future<void> _handleDeferredDeepLink() async {
     final match = await deferredService.matchDeepLinkWithRetry();
 
     if (match != null && match.success && match.deepLinkUrl != null) {
-      SmartLinkLogger.info('✅ Deferred deep link found!');
-      SmartLinkLogger.info('   Method: ${match.matchMethod}');
-      SmartLinkLogger.info('   URL: ${match.deepLinkUrl}');
+      LinkGravityLogger.info('✅ Deferred deep link found!');
+      LinkGravityLogger.info('   Method: ${match.matchMethod}');
+      LinkGravityLogger.info('   URL: ${match.deepLinkUrl}');
 
       // Track install with attribution
       await _api.trackInstall(
@@ -465,14 +465,14 @@ Future<void> _handleDeferredDeepLink() async {
       _deepLink.linkController.add(deepLink);
 
     } else {
-      SmartLinkLogger.debug('No deferred deep link found');
+      LinkGravityLogger.debug('No deferred deep link found');
     }
 
     // Mark as launched
     await _storage.markAsLaunched();
 
   } catch (e, stackTrace) {
-    SmartLinkLogger.error('Error handling deferred deep link', e, stackTrace);
+    LinkGravityLogger.error('Error handling deferred deep link', e, stackTrace);
     await _storage.markAsLaunched();
   }
 }
@@ -642,7 +642,7 @@ Future<void> trackFailedMatch({
       'timestamp': DateTime.now().toIso8601String(),
     });
   } catch (e) {
-    SmartLinkLogger.debug('Failed to track failed match', e);
+    LinkGravityLogger.debug('Failed to track failed match', e);
     // Don't throw - this is optional analytics
   }
 }
@@ -655,7 +655,7 @@ Future<DeferredLinkResponse?> matchDeepLink() async {
   // ... existing code ...
 
   if (match == null || !match['found']) {
-    SmartLinkLogger.info('No deferred deep link found');
+    LinkGravityLogger.info('No deferred deep link found');
 
     // ✅ Track failed match for analytics
     await _api.trackFailedMatch(
@@ -745,11 +745,11 @@ test('should NOT retry on 404', () async {
 // test/integration/deferred_deep_link_test.dart
 testWidgets('Android: should match via referrer token', (tester) async {
   // Mock Install Referrer API
-  mockInstallReferrer('utm_source=smartlink&deferred_link=eyJsaWQi...');
+  mockInstallReferrer('utm_source=linkgravity&deferred_link=eyJsaWQi...');
 
-  final sdk = await SmartLink.initialize(
+  final sdk = await LinkGravity.initialize(
     apiKey: 'pk_test_real_backend_key',
-    baseUrl: 'https://staging-api.smartlink.com',
+    baseUrl: 'https://staging-api.linkgravity.com',
   );
 
   DeepLink? receivedLink;
@@ -765,9 +765,9 @@ testWidgets('Android: should match via referrer token', (tester) async {
 });
 
 testWidgets('iOS: should match via fingerprint', (tester) async {
-  final sdk = await SmartLink.initialize(
+  final sdk = await LinkGravity.initialize(
     apiKey: 'pk_test_real_backend_key',
-    baseUrl: 'https://staging-api.smartlink.com',
+    baseUrl: 'https://staging-api.linkgravity.com',
   );
 
   DeepLink? receivedLink;
@@ -789,7 +789,7 @@ testWidgets('should retry on network failure', (tester) async {
     return attemptCount < 3; // Fail first 2 attempts
   });
 
-  final sdk = await SmartLink.initialize(
+  final sdk = await LinkGravity.initialize(
     apiKey: 'pk_test_123',
   );
 
@@ -802,9 +802,9 @@ testWidgets('should retry on network failure', (tester) async {
 **Authentication Test**:
 ```dart
 testWidgets('should authenticate with public key', (tester) async {
-  final sdk = await SmartLink.initialize(
+  final sdk = await LinkGravity.initialize(
     apiKey: 'pk_test_real_key',
-    baseUrl: 'https://staging-api.smartlink.com',
+    baseUrl: 'https://staging-api.linkgravity.com',
   );
 
   // Should succeed with public key
@@ -821,7 +821,7 @@ testWidgets('should authenticate with public key', (tester) async {
 - [ ] `lib/src/services/api_service.dart` (authentication header, timeout)
 - [ ] `lib/src/services/deferred_deep_link_service.dart` (retry logic, response parsing)
 - [ ] `lib/src/models/deep_link_match.dart` (fromJson method)
-- [ ] `lib/src/smartlink_client.dart` (use matchDeepLinkWithRetry)
+- [ ] `lib/src/linkgravity_client.dart` (use matchDeepLinkWithRetry)
 
 ### Tests
 - [ ] `test/services/api_service_test.dart` (new/updated tests)
@@ -841,13 +841,13 @@ testWidgets('should authenticate with public key', (tester) async {
 ### Manual Testing (Before Release)
 
 - [ ] **Android Real Device**:
-  - [ ] Install app from Play Store after clicking SmartLink
+  - [ ] Install app from Play Store after clicking LinkGravity
   - [ ] Verify deferred link opens correct screen
   - [ ] Check logs for "Deterministic match found via referrer"
   - [ ] Verify attribution data sent to backend
 
 - [ ] **iOS Real Device**:
-  - [ ] Install app from App Store after clicking SmartLink
+  - [ ] Install app from App Store after clicking LinkGravity
   - [ ] Verify deferred link opens correct screen
   - [ ] Check logs for "Probabilistic match found via fingerprint"
   - [ ] Verify attribution data sent to backend
@@ -915,7 +915,7 @@ testWidgets('should authenticate with public key', (tester) async {
 
 ```yaml
 dependencies:
-  smartlink_flutter_sdk: ^1.1.0  # Update from 1.0.x
+  linkgravity_flutter_sdk: ^1.1.0  # Update from 1.0.x
 ```
 
 Then run:
@@ -983,7 +983,7 @@ If critical issues are found after release:
 
 1. **Pub.dev Rollback**:
    - Publish hotfix version (e.g., `1.0.1`)
-   - Notify users to downgrade: `smartlink_flutter_sdk: 1.0.1`
+   - Notify users to downgrade: `linkgravity_flutter_sdk: 1.0.1`
 
 2. **Authentication Issues**:
    - Verify backend accepts `Authorization: Bearer` header
@@ -1008,7 +1008,7 @@ If critical issues are found after release:
 
 - [Best Practices Analysis](./SDK-BACKEND-COMPATIBILITY.md)
 - [API Compatibility Matrix](./API-COMPATIBILITY.md)
-- [Backend Story](../smartlink/JIRA-SDK-002-BACKEND.md)
+- [Backend Story](../linkgravity/JIRA-SDK-002-BACKEND.md)
 
 ---
 

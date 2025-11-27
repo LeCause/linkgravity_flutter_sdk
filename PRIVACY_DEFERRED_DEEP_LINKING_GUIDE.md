@@ -1,6 +1,6 @@
 # Privacy-Aware Deferred Deep Linking Guide
 
-This guide covers the deferred deep linking features added to the SmartLink Flutter SDK for iOS and Android.
+This guide covers the deferred deep linking features added to the LinkGravity Flutter SDK for iOS and Android.
 
 ## Overview
 
@@ -17,17 +17,17 @@ Deferred deep linking enables your app to open to a specific screen immediately 
 
 ## Quick Start
 
-### 1. Initialize SmartLink SDK
+### 1. Initialize LinkGravity SDK
 
 ```dart
-import 'package:smartlink_flutter_sdk/smartlink_flutter_sdk.dart';
+import 'package:linkgravity_flutter_sdk/linkgravity_flutter_sdk.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize SmartLink SDK
-  await SmartLinkClient.initialize(
-    baseUrl: 'https://api.smartlink.io',
+  // Initialize LinkGravity SDK
+  await LinkGravityClient.initialize(
+    baseUrl: 'https://api.linkgravity.io',
     apiKey: 'pk_test_...',
   );
 
@@ -53,7 +53,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _handleDeferredDeepLink() async {
-    final deepLink = await SmartLinkClient.instance.handleDeferredDeepLink(
+    final deepLink = await LinkGravityClient.instance.handleDeferredDeepLink(
       onFound: () {
         print('🎉 Opening deferred deep link');
         // The SDK will automatically navigate based on the deep link
@@ -71,7 +71,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SmartLink Example',
+      title: 'LinkGravity Example',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const HomeScreen(),
     );
@@ -83,10 +83,10 @@ class _MyAppState extends State<MyApp> {
 
 ```dart
 // Track that user has installed the app
-await SmartLinkClient.instance.trackInstall();
+await LinkGravityClient.instance.trackInstall();
 
 // Or with deferred link data (automatic if using handleDeferredDeepLink)
-await SmartLinkClient.instance.trackInstall(
+await LinkGravityClient.instance.trackInstall(
   deferredLinkId: 'link-123',
   matchConfidence: 'high',
   matchScore: 105.0,
@@ -97,7 +97,7 @@ await SmartLinkClient.instance.trackInstall(
 
 ```dart
 // When user completes a purchase or signup
-await SmartLinkClient.instance.trackConversion(
+await LinkGravityClient.instance.trackConversion(
   linkId: 'link-123',
   conversionType: 'purchase',
   revenue: 29.99,
@@ -216,10 +216,10 @@ The SDK automatically requests postback on first launch (iOS only):
 For advanced use cases:
 
 ```dart
-import 'package:smartlink_flutter_sdk/smartlink_flutter_sdk.dart';
+import 'package:linkgravity_flutter_sdk/linkgravity_flutter_sdk.dart';
 
 // To manually request postback:
-final client = SmartLinkClient.instance;
+final client = LinkGravityClient.instance;
 
 // SKAdNetwork will be requested automatically on next app launch
 // You can force it if needed (advanced use only)
@@ -231,7 +231,7 @@ The SDK handles errors gracefully:
 
 ```dart
 try {
-  final deepLink = await SmartLinkClient.instance.handleDeferredDeepLink(
+  final deepLink = await LinkGravityClient.instance.handleDeferredDeepLink(
     onFound: () => print('Found!'),
     onNotFound: () => print('Not found - showing home'),
   );
@@ -309,10 +309,10 @@ if (match.isAcceptableConfidence()) {
 
 ```dart
 // On app launch
-await SmartLinkClient.instance.trackInstall();
+await LinkGravityClient.instance.trackInstall();
 
 // On important user actions
-await SmartLinkClient.instance.trackConversion(
+await LinkGravityClient.instance.trackConversion(
   linkId: 'link-123',
   conversionType: 'purchase',
   revenue: totalPrice,
@@ -323,14 +323,14 @@ await SmartLinkClient.instance.trackConversion(
 
 ```dart
 try {
-  final deepLink = await SmartLinkClient.instance.handleDeferredDeepLink(
+  final deepLink = await LinkGravityClient.instance.handleDeferredDeepLink(
     onFound: () => print('Opening deep link'),
     onNotFound: () => print('Showing home screen'),
   );
 } catch (e) {
   // Network error, SDK error, etc.
   // App continues to home screen
-  SmartLinkLogger.error('Deep link error: $e');
+  LinkGravityLogger.error('Deep link error: $e');
 }
 ```
 
@@ -361,13 +361,13 @@ try {
 
 ```dart
 // Make sure to initialize before use
-await SmartLinkClient.initialize(
-  baseUrl: 'https://api.smartlink.io',
+await LinkGravityClient.initialize(
+  baseUrl: 'https://api.linkgravity.io',
   apiKey: 'your-api-key',
 );
 
 // Then use
-final link = await SmartLinkClient.instance.handleDeferredDeepLink(
+final link = await LinkGravityClient.instance.handleDeferredDeepLink(
   onFound: () => print('Found'),
   onNotFound: () => print('Not found'),
 );
@@ -378,7 +378,7 @@ final link = await SmartLinkClient.instance.handleDeferredDeepLink(
 ```
 App Launch
     ↓
-SmartLinkClient.initialize()
+LinkGravityClient.initialize()
     ↓
 initState() - handleDeferredDeepLink()
     ↓
@@ -410,7 +410,7 @@ If matching takes too long, SDK will timeout and show home screen rather than bl
 
 ## Privacy Policy
 
-Users should be informed that SmartLink collects:
+Users should be informed that LinkGravity collects:
 - Device timezone and locale
 - Device model and OS version
 - App usage data
@@ -432,5 +432,5 @@ Importantly, we do NOT collect:
 For issues or questions:
 1. Check this guide's Troubleshooting section
 2. Review example app code
-3. Check SDK logs: `SmartLinkLogger.setLevel(LogLevel.debug)`
-4. File issue on GitHub: https://github.com/LeCause/smart-link-sdk/issues
+3. Check SDK logs: `LinkGravityLogger.setLevel(LogLevel.debug)`
+4. File issue on GitHub: https://github.com/LeCause/linkgravity-sdk/issues

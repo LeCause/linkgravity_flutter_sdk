@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smartlink_flutter_sdk/src/services/api_service.dart';
+import 'package:linkgravity_flutter_sdk/src/services/api_service.dart';
 
 void main() {
   group('DeferredDeepLinkService Retry Logic', () {

@@ -10,8 +10,8 @@ enum LogLevel {
   verbose,
 }
 
-/// Simple logger for SmartLink SDK
-class SmartLinkLogger {
+/// Simple logger for LinkGravity SDK
+class LinkGravityLogger {
   static LogLevel _currentLevel = LogLevel.info;
 
   /// Set the logging level
@@ -60,7 +60,7 @@ class SmartLinkLogger {
   static void _log(String level, String message,
       [Object? error, StackTrace? stackTrace]) {
     final timestamp = DateTime.now().toIso8601String();
-    final logMessage = '[$timestamp] [SmartLink] [$level] $message';
+    final logMessage = '[$timestamp] [LinkGravity] [$level] $message';
 
     if (kDebugMode) {
       // ignore: avoid_print

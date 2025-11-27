@@ -1,7 +1,7 @@
 import 'utils/logger.dart';
 
-/// Configuration for SmartLink SDK
-class SmartLinkConfig {
+/// Configuration for LinkGravity SDK
+class LinkGravityConfig {
   /// Enable analytics tracking
   final bool enableAnalytics;
 
@@ -29,7 +29,7 @@ class SmartLinkConfig {
   /// Custom metadata to include with all events
   final Map<String, dynamic>? globalMetadata;
 
-  SmartLinkConfig({
+  LinkGravityConfig({
     this.enableAnalytics = true,
     this.enableDeepLinking = true,
     this.enableOfflineQueue = true,
@@ -50,7 +50,7 @@ class SmartLinkConfig {
   }
 
   /// Create a copy with updated values
-  SmartLinkConfig copyWith({
+  LinkGravityConfig copyWith({
     bool? enableAnalytics,
     bool? enableDeepLinking,
     bool? enableOfflineQueue,
@@ -61,7 +61,7 @@ class SmartLinkConfig {
     bool? trackLifecycleEvents,
     Map<String, dynamic>? globalMetadata,
   }) {
-    return SmartLinkConfig(
+    return LinkGravityConfig(
       enableAnalytics: enableAnalytics ?? this.enableAnalytics,
       enableDeepLinking: enableDeepLinking ?? this.enableDeepLinking,
       enableOfflineQueue: enableOfflineQueue ?? this.enableOfflineQueue,
@@ -76,7 +76,7 @@ class SmartLinkConfig {
 
   @override
   String toString() {
-    return 'SmartLinkConfig('
+    return 'LinkGravityConfig('
         'enableAnalytics: $enableAnalytics, '
         'enableDeepLinking: $enableDeepLinking, '
         'enableOfflineQueue: $enableOfflineQueue, '

@@ -17,14 +17,14 @@ class FingerprintService {
       final attributes = await _collectDeviceAttributes();
       final fingerprint = _hashAttributes(attributes);
 
-      SmartLinkLogger.debug('Generated fingerprint: $fingerprint');
+      LinkGravityLogger.debug('Generated fingerprint: $fingerprint');
       return fingerprint;
     } catch (e) {
-      SmartLinkLogger.error('Failed to generate fingerprint', e);
+      LinkGravityLogger.error('Failed to generate fingerprint', e);
 
       // Fallback to timestamp-based fingerprint
       final fallback = _generateFallbackFingerprint();
-      SmartLinkLogger.warning('Using fallback fingerprint: $fallback');
+      LinkGravityLogger.warning('Using fallback fingerprint: $fallback');
       return fallback;
     }
   }
@@ -51,7 +51,7 @@ class FingerprintService {
           'isPhysicalDevice': androidInfo.isPhysicalDevice,
         });
 
-        SmartLinkLogger.verbose('Android device attributes collected');
+        LinkGravityLogger.verbose('Android device attributes collected');
       } else if (Platform.isIOS) {
         final iosInfo = await _deviceInfo.iosInfo;
 
@@ -69,7 +69,7 @@ class FingerprintService {
           },
         });
 
-        SmartLinkLogger.verbose('iOS device attributes collected');
+        LinkGravityLogger.verbose('iOS device attributes collected');
       } else if (kIsWeb) {
         final webInfo = await _deviceInfo.webBrowserInfo;
 
@@ -81,7 +81,7 @@ class FingerprintService {
           'platform_web': webInfo.platform ?? 'unknown',
         });
 
-        SmartLinkLogger.verbose('Web browser attributes collected');
+        LinkGravityLogger.verbose('Web browser attributes collected');
       }
 
       // Add common attributes
@@ -93,7 +93,7 @@ class FingerprintService {
       // Note: We intentionally avoid screen size as it can change (device rotation)
       // and may not be available early in app lifecycle
     } catch (e) {
-      SmartLinkLogger.error('Error collecting device attributes', e);
+      LinkGravityLogger.error('Error collecting device attributes', e);
     }
 
     return attributes;
@@ -124,7 +124,7 @@ class FingerprintService {
     }
 
     final combined = buffer.toString();
-    SmartLinkLogger.verbose('Fingerprint input: $combined');
+    LinkGravityLogger.verbose('Fingerprint input: $combined');
 
     // Create SHA-256 hash
     final bytes = utf8.encode(combined);

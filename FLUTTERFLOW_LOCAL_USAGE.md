@@ -1,6 +1,6 @@
-# Using SmartLink SDK Locally in FlutterFlow
+# Using LinkGravity SDK Locally in FlutterFlow
 
-There are **3 ways** to use the SmartLink SDK in FlutterFlow without publishing to pub.dev:
+There are **3 ways** to use the LinkGravity SDK in FlutterFlow without publishing to pub.dev:
 
 ---
 
@@ -12,16 +12,16 @@ This is the most flexible and FlutterFlow-compatible approach.
 
 1. **Initialize git** in SDK folder:
    ```bash
-   cd smartlink_flutter_sdk
+   cd linkgravity_flutter_sdk
    git init
    git add .
-   git commit -m "Initial SmartLink SDK"
+   git commit -m "Initial LinkGravity SDK"
    ```
 
 2. **Push to private repository** (GitHub, GitLab, Bitbucket):
    ```bash
    # GitHub example
-   git remote add origin https://github.com/your-org/smartlink_flutter_sdk.git
+   git remote add origin https://github.com/your-org/linkgravity_flutter_sdk.git
    git branch -M main
    git push -u origin main
    ```
@@ -33,9 +33,9 @@ This is the most flexible and FlutterFlow-compatible approach.
 2. **Add git dependency** in `pubspec.yaml`:
    ```yaml
    dependencies:
-     smartlink_flutter_sdk:
+     linkgravity_flutter_sdk:
        git:
-         url: https://github.com/your-org/smartlink_flutter_sdk.git
+         url: https://github.com/your-org/linkgravity_flutter_sdk.git
          ref: main  # or specific commit/tag
    ```
 
@@ -53,9 +53,9 @@ This is the most flexible and FlutterFlow-compatible approach.
 **GitHub Personal Access Token**:
 ```yaml
 dependencies:
-  smartlink_flutter_sdk:
+  linkgravity_flutter_sdk:
     git:
-      url: https://your-token@github.com/your-org/smartlink_flutter_sdk.git
+      url: https://your-token@github.com/your-org/linkgravity_flutter_sdk.git
       ref: main
 ```
 
@@ -80,10 +80,10 @@ Use when developing SDK locally, testing changes frequently.
 1. **Edit `pubspec.yaml`** manually:
    ```yaml
    dependencies:
-     smartlink_flutter_sdk:
-       path: C:/smartlink/smartlink/smartlink_flutter_sdk  # Windows
-       # path: /Users/you/smartlink/smartlink_flutter_sdk  # Mac
-       # path: /home/you/smartlink/smartlink_flutter_sdk   # Linux
+     linkgravity_flutter_sdk:
+       path: C:/linkgravity/linkgravity/linkgravity_flutter_sdk  # Windows
+       # path: /Users/you/linkgravity/linkgravity_flutter_sdk  # Mac
+       # path: /home/you/linkgravity/linkgravity_flutter_sdk   # Linux
    ```
 
 2. **Run**:
@@ -117,7 +117,7 @@ Host SDK on local network, FlutterFlow fetches via HTTP.
 
 2. **Run server**:
    ```bash
-   cd smartlink
+   cd linkgravity
    dart pub global run pub_server -p 8080 --directory .
    ```
 
@@ -127,9 +127,9 @@ Host SDK on local network, FlutterFlow fetches via HTTP.
 
 ```yaml
 dependencies:
-  smartlink_flutter_sdk:
+  linkgravity_flutter_sdk:
     hosted:
-      name: smartlink_flutter_sdk
+      name: linkgravity_flutter_sdk
       url: http://YOUR_LOCAL_IP:8080
     version: ^1.0.0
 ```
@@ -197,7 +197,7 @@ The SDK now supports **deterministic deferred deep linking** on Android using th
 
 ```dart
 import 'dart:io';
-import 'package:smartlink_flutter_sdk/smartlink_flutter_sdk.dart';
+import 'package:linkgravity_flutter_sdk/linkgravity_flutter_sdk.dart';
 
 /// Check for deferred deep link and get match details
 /// Returns JSON with deepLinkUrl and matchMethod
@@ -205,7 +205,7 @@ Future<String?> checkDeferredDeepLink() async {
   try {
     String? result;
 
-    await SmartLinkClient.instance.handleDeferredDeepLink(
+    await LinkGravityClient.instance.handleDeferredDeepLink(
       onFound: () {
         print('Deferred deep link found!');
       },
@@ -305,7 +305,7 @@ Widget buildAttributionInfo() {
 
 **Phase 3: Production** (Publish to pub.dev)
 1. Publish SDK to pub.dev
-2. Update to: `smartlink_flutter_sdk: ^1.0.0`
+2. Update to: `linkgravity_flutter_sdk: ^1.0.0`
 3. Public availability
 
 ---
@@ -315,18 +315,18 @@ Widget buildAttributionInfo() {
 ### 1. Prepare SDK
 
 ```bash
-cd smartlink_flutter_sdk
+cd linkgravity_flutter_sdk
 
 # Initialize git
 git init
 git add .
-git commit -m "feat: SmartLink SDK v1.0.0"
+git commit -m "feat: LinkGravity SDK v1.0.0"
 
 # Create GitHub repo (via UI or CLI)
-gh repo create smartlink_flutter_sdk --private
+gh repo create linkgravity_flutter_sdk --private
 
 # Push
-git remote add origin https://github.com/your-org/smartlink_flutter_sdk.git
+git remote add origin https://github.com/your-org/linkgravity_flutter_sdk.git
 git push -u origin main
 
 # Tag version
@@ -349,25 +349,25 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # SmartLink SDK from private Git
-  smartlink_flutter_sdk:
+  # LinkGravity SDK from private Git
+  linkgravity_flutter_sdk:
     git:
-      url: https://github.com/your-org/smartlink_flutter_sdk.git
+      url: https://github.com/your-org/linkgravity_flutter_sdk.git
       ref: v1.0.0  # Use specific version tag
 ```
 
 ### 3. Create Custom Actions
 
-**Action: initializeSmartLink**
+**Action: initializeLinkGravity**
 ```dart
-import 'package:smartlink_flutter_sdk/smartlink_flutter_sdk.dart';
+import 'package:linkgravity_flutter_sdk/linkgravity_flutter_sdk.dart';
 
-Future<bool> initializeSmartLink(String baseUrl) async {
+Future<bool> initializeLinkGravity(String baseUrl) async {
   try {
-    await SmartLinkClient.initialize(
+    await LinkGravityClient.initialize(
       baseUrl: baseUrl,
       apiKey: 'demo-api-key',
-      config: SmartLinkConfig(
+      config: LinkGravityConfig(
         enableAnalytics: true,
         enableDeepLinking: true,
         logLevel: LogLevel.debug,
@@ -375,7 +375,7 @@ Future<bool> initializeSmartLink(String baseUrl) async {
     );
     return true;
   } catch (e) {
-    print('SmartLink init failed: $e');
+    print('LinkGravity init failed: $e');
     return false;
   }
 }
@@ -383,10 +383,10 @@ Future<bool> initializeSmartLink(String baseUrl) async {
 
 **Action: setupDeepLinkListener**
 ```dart
-import 'package:smartlink_flutter_sdk/smartlink_flutter_sdk.dart';
+import 'package:linkgravity_flutter_sdk/linkgravity_flutter_sdk.dart';
 
 Future<void> setupDeepLinkListener(BuildContext context) async {
-  SmartLinkClient.instance.onDeepLink.listen((deepLink) {
+  LinkGravityClient.instance.onDeepLink.listen((deepLink) {
     print('Deep link: ${deepLink.path}');
 
     // Navigate based on path
@@ -399,17 +399,17 @@ Future<void> setupDeepLinkListener(BuildContext context) async {
 
 **Action: trackConversion** (NEW)
 ```dart
-import 'package:smartlink_flutter_sdk/smartlink_flutter_sdk.dart';
+import 'package:linkgravity_flutter_sdk/linkgravity_flutter_sdk.dart';
 
 /// Track a conversion event (purchase, signup, etc.)
-Future<bool> trackSmartLinkConversion({
+Future<bool> trackLinkGravityConversion({
   required String type,
   double? revenue,
   String currency = 'USD',
   String? linkId,
 }) async {
   try {
-    return await SmartLinkClient.instance.trackConversion(
+    return await LinkGravityClient.instance.trackConversion(
       type: type,
       revenue: revenue,
       currency: currency,
@@ -425,7 +425,7 @@ Future<bool> trackSmartLinkConversion({
 ### 4. App Initialization
 
 **App Settings → On App Start:**
-1. Add Custom Action: `initializeSmartLink`
+1. Add Custom Action: `initializeLinkGravity`
    - Pass parameter: `baseUrl` = `http://YOUR_LOCAL_IP:3000`
 2. Add Custom Action: `setupDeepLinkListener`
 
@@ -437,7 +437,7 @@ Future<bool> trackSmartLinkConversion({
 
 ```bash
 # Make changes to SDK
-cd smartlink_flutter_sdk
+cd linkgravity_flutter_sdk
 # ... edit files ...
 
 # Commit and tag new version
@@ -496,22 +496,22 @@ flutter run      # Test changes
 **Android-specific troubleshooting**:
 1. App must be installed from Play Store (not sideloaded/debug)
 2. Google Play Services must be available on device
-3. SmartLink backend must include `deferred_link` parameter in Play Store URL
+3. LinkGravity backend must include `deferred_link` parameter in Play Store URL
 4. Check logs for: `Retrieving Play Install Referrer...`
 
 **Expected log output (success)**:
 ```
-I/SmartLink: Retrieving Play Install Referrer...
-I/SmartLink: Found deferred_link token: eyJsaWQiOiJjbWk3NW...
-I/SmartLink: ✅ Deterministic match found via referrer!
+I/LinkGravity: Retrieving Play Install Referrer...
+I/LinkGravity: Found deferred_link token: eyJsaWQiOiJjbWk3NW...
+I/LinkGravity: ✅ Deterministic match found via referrer!
 ```
 
 **Expected log output (fallback to fingerprint)**:
 ```
-I/SmartLink: Retrieving Play Install Referrer...
-D/SmartLink: Empty referrer URL
-D/SmartLink: Referrer lookup failed, falling back to fingerprint...
-I/SmartLink: Using fingerprint matching...
+I/LinkGravity: Retrieving Play Install Referrer...
+D/LinkGravity: Empty referrer URL
+D/LinkGravity: Referrer lookup failed, falling back to fingerprint...
+I/LinkGravity: Using fingerprint matching...
 ```
 
 ---

@@ -7,15 +7,15 @@ import '../utils/logger.dart';
 /// Service for local data storage using SharedPreferences
 class StorageService {
   // Storage keys
-  static const String _keyFingerprint = 'smartlink_fingerprint';
-  static const String _keyUserId = 'smartlink_user_id';
-  static const String _keyDeviceId = 'smartlink_device_id';
-  static const String _keyAttribution = 'smartlink_attribution';
-  static const String _keyFailedEvents = 'smartlink_failed_events';
-  static const String _keySessionId = 'smartlink_session_id';
-  static const String _keyFirstLaunch = 'smartlink_first_launch';
-  static const String _keyInstallTimestamp = 'smartlink_install_timestamp';
-  static const String _keyLastEventSync = 'smartlink_last_event_sync';
+  static const String _keyFingerprint = 'linkgravity_fingerprint';
+  static const String _keyUserId = 'linkgravity_user_id';
+  static const String _keyDeviceId = 'linkgravity_device_id';
+  static const String _keyAttribution = 'linkgravity_attribution';
+  static const String _keyFailedEvents = 'linkgravity_failed_events';
+  static const String _keySessionId = 'linkgravity_session_id';
+  static const String _keyFirstLaunch = 'linkgravity_first_launch';
+  static const String _keyInstallTimestamp = 'linkgravity_install_timestamp';
+  static const String _keyLastEventSync = 'linkgravity_last_event_sync';
 
   /// Cached SharedPreferences instance
   SharedPreferences? _prefs;
@@ -34,7 +34,7 @@ class StorageService {
   Future<void> saveFingerprint(String fingerprint) async {
     final prefs = await _preferences;
     await prefs.setString(_keyFingerprint, fingerprint);
-    SmartLinkLogger.debug('Fingerprint saved');
+    LinkGravityLogger.debug('Fingerprint saved');
   }
 
   /// Get saved device fingerprint
@@ -51,7 +51,7 @@ class StorageService {
   Future<void> saveUserId(String userId) async {
     final prefs = await _preferences;
     await prefs.setString(_keyUserId, userId);
-    SmartLinkLogger.debug('User ID saved: $userId');
+    LinkGravityLogger.debug('User ID saved: $userId');
   }
 
   /// Get saved user ID
@@ -64,7 +64,7 @@ class StorageService {
   Future<void> clearUserId() async {
     final prefs = await _preferences;
     await prefs.remove(_keyUserId);
-    SmartLinkLogger.debug('User ID cleared');
+    LinkGravityLogger.debug('User ID cleared');
   }
 
   // ============================================================================
@@ -113,7 +113,7 @@ class StorageService {
   Future<void> saveAttribution(AttributionData data) async {
     final prefs = await _preferences;
     await prefs.setString(_keyAttribution, jsonEncode(data.toJson()));
-    SmartLinkLogger.debug('Attribution data saved');
+    LinkGravityLogger.debug('Attribution data saved');
   }
 
   /// Get saved attribution data
@@ -129,7 +129,7 @@ class StorageService {
       }
       return null;
     } catch (e) {
-      SmartLinkLogger.error('Failed to load attribution data', e);
+      LinkGravityLogger.error('Failed to load attribution data', e);
       return null;
     }
   }
@@ -157,7 +157,7 @@ class StorageService {
       const maxQueueSize = 1000;
       if (existing.length > maxQueueSize) {
         existing.removeRange(0, existing.length - maxQueueSize);
-        SmartLinkLogger.warning(
+        LinkGravityLogger.warning(
           'Failed events queue exceeded max size, oldest events were dropped',
         );
       }
@@ -166,10 +166,10 @@ class StorageService {
       final eventsJson = existing.map((e) => jsonEncode(e.toJson())).toList();
       await prefs.setStringList(_keyFailedEvents, eventsJson);
 
-      SmartLinkLogger.debug(
+      LinkGravityLogger.debug(
           'Saved ${events.length} failed events (total: ${existing.length})');
     } catch (e) {
-      SmartLinkLogger.error('Failed to save failed events', e);
+      LinkGravityLogger.error('Failed to save failed events', e);
     }
   }
 
@@ -185,7 +185,7 @@ class StorageService {
               ))
           .toList();
     } catch (e) {
-      SmartLinkLogger.error('Failed to load failed events', e);
+      LinkGravityLogger.error('Failed to load failed events', e);
       return [];
     }
   }
@@ -194,7 +194,7 @@ class StorageService {
   Future<void> clearFailedEvents() async {
     final prefs = await _preferences;
     await prefs.remove(_keyFailedEvents);
-    SmartLinkLogger.debug('Cleared failed events queue');
+    LinkGravityLogger.debug('Cleared failed events queue');
   }
 
   /// Get failed events count
@@ -219,7 +219,7 @@ class StorageService {
     await prefs.setBool(_keyFirstLaunch, true);
     await prefs.setString(
         _keyInstallTimestamp, DateTime.now().toIso8601String());
-    SmartLinkLogger.info('First launch completed, marked as launched');
+    LinkGravityLogger.info('First launch completed, marked as launched');
   }
 
   /// Get install timestamp
@@ -269,9 +269,9 @@ class StorageService {
     try {
       final prefs = await _preferences;
       await prefs.setString(key, jsonEncode(data));
-      SmartLinkLogger.debug('Data saved for key: $key');
+      LinkGravityLogger.debug('Data saved for key: $key');
     } catch (e) {
-      SmartLinkLogger.error('Failed to save data for key: $key', e);
+      LinkGravityLogger.error('Failed to save data for key: $key', e);
       rethrow;
     }
   }
@@ -297,7 +297,7 @@ class StorageService {
       }
       return null;
     } catch (e) {
-      SmartLinkLogger.error('Failed to load data for key: $key', e);
+      LinkGravityLogger.error('Failed to load data for key: $key', e);
       return null;
     }
   }
@@ -306,14 +306,14 @@ class StorageService {
   Future<void> removeData(String key) async {
     final prefs = await _preferences;
     await prefs.remove(key);
-    SmartLinkLogger.debug('Data removed for key: $key');
+    LinkGravityLogger.debug('Data removed for key: $key');
   }
 
   // ============================================================================
   // GENERAL
   // ============================================================================
 
-  /// Clear all SmartLink data
+  /// Clear all LinkGravity data
   Future<void> clearAll() async {
     final prefs = await _preferences;
     final keys = [
@@ -332,7 +332,7 @@ class StorageService {
       await prefs.remove(key);
     }
 
-    SmartLinkLogger.info('All SmartLink data cleared');
+    LinkGravityLogger.info('All LinkGravity data cleared');
   }
 
   /// Check if SDK has been initialized before

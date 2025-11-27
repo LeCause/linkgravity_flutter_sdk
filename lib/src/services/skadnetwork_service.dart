@@ -18,24 +18,24 @@ class SKAdNetworkService {
   Future<void> requestPostback() async {
     // SKAdNetwork is iOS-only
     if (!Platform.isIOS) {
-      SmartLinkLogger.debug('SKAdNetwork: Not available on non-iOS platform');
+      LinkGravityLogger.debug('SKAdNetwork: Not available on non-iOS platform');
       return;
     }
 
     try {
-      SmartLinkLogger.debug('SKAdNetwork: Requesting postback from StoreKit');
+      LinkGravityLogger.debug('SKAdNetwork: Requesting postback from StoreKit');
 
       // Note: In actual implementation, this would use method channels
       // to call native iOS code:
-      // const platform = MethodChannel('com.smartlink/skadnetwork');
+      // const platform = MethodChannel('com.linkgravity/skadnetwork');
       // final result = await platform.invokeMethod('requestPostback');
 
       // The actual postback data is sent by iOS automatically
       // Backend receives it at POST /api/v1/skadnetwork-postback
 
-      SmartLinkLogger.debug('SKAdNetwork: Postback request initiated');
+      LinkGravityLogger.debug('SKAdNetwork: Postback request initiated');
     } catch (e) {
-      SmartLinkLogger.warning('SKAdNetwork: Error requesting postback: $e');
+      LinkGravityLogger.warning('SKAdNetwork: Error requesting postback: $e');
       // Graceful failure - app continues to work without SKAdNetwork
     }
   }
@@ -62,7 +62,7 @@ class SKAdNetworkService {
       return true;
     } catch (e) {
       final errorMessage = 'SKAdNetwork postback request failed: $e';
-      SmartLinkLogger.error(errorMessage, e);
+      LinkGravityLogger.error(errorMessage, e);
       onError?.call(errorMessage);
       return false;
     }

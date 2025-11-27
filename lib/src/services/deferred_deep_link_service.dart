@@ -61,14 +61,14 @@ class DeferredDeepLinkService {
 
     for (int attempt = 0; attempt < maxAttempts; attempt++) {
       try {
-        SmartLinkLogger.debug(
+        LinkGravityLogger.debug(
             'Deferred link lookup attempt ${attempt + 1}/$maxAttempts');
 
         final result =
             await matchDeferredDeepLink().timeout(timeout);
 
         if (result != null) {
-          SmartLinkLogger.info(
+          LinkGravityLogger.info(
               '✅ Deferred link found on attempt ${attempt + 1}');
           return result;
         }
@@ -77,26 +77,26 @@ class DeferredDeepLinkService {
         return null;
 
       } on TimeoutException catch (e) {
-        SmartLinkLogger.warning(
+        LinkGravityLogger.warning(
             'Deferred link lookup timeout on attempt ${attempt + 1}', e);
 
         // Retry with exponential backoff
         if (attempt < maxAttempts - 1) {
           final delaySeconds = pow(2, attempt + 1).toInt(); // 2, 4, 8 seconds
-          SmartLinkLogger.debug('Retrying in $delaySeconds seconds...');
+          LinkGravityLogger.debug('Retrying in $delaySeconds seconds...');
           await Future.delayed(Duration(seconds: delaySeconds));
         }
 
       } on ApiException catch (e) {
         // Don't retry on client errors (400, 404, etc.)
         if (e.statusCode != null && e.statusCode! >= 400 && e.statusCode! < 500) {
-          SmartLinkLogger.debug(
+          LinkGravityLogger.debug(
               'Client error ${e.statusCode}, not retrying');
           return null;
         }
 
         // Retry on server errors (500+)
-        SmartLinkLogger.warning(
+        LinkGravityLogger.warning(
             'Server error ${e.statusCode} on attempt ${attempt + 1}', e);
 
         if (attempt < maxAttempts - 1) {
@@ -106,7 +106,7 @@ class DeferredDeepLinkService {
 
       } catch (e) {
         // Unknown error - retry
-        SmartLinkLogger.error('Unexpected error on attempt ${attempt + 1}', e);
+        LinkGravityLogger.error('Unexpected error on attempt ${attempt + 1}', e);
 
         if (attempt < maxAttempts - 1) {
           final delaySeconds = pow(2, attempt + 1).toInt();
@@ -115,7 +115,7 @@ class DeferredDeepLinkService {
       }
     }
 
-    SmartLinkLogger.warning(
+    LinkGravityLogger.warning(
         'Failed to match deferred link after $maxAttempts attempts');
     return null;
   }
@@ -132,48 +132,48 @@ class DeferredDeepLinkService {
     try {
       // Step 1: Try Android Play Install Referrer (deterministic)
       if (Platform.isAndroid) {
-        SmartLinkLogger.info(
+        LinkGravityLogger.info(
             'Android detected, trying Play Install Referrer...');
 
         final referrerToken = await _installReferrer.getInstallReferrer();
 
         if (referrerToken != null) {
-          SmartLinkLogger.info('Found referrer token, querying server...');
+          LinkGravityLogger.info('Found referrer token, querying server...');
 
           final response =
               await apiService.getDeferredLinkByReferrer(referrerToken);
 
           if (response != null && response['success'] == true) {
-            SmartLinkLogger.info('✅ Deterministic match found via referrer!');
+            LinkGravityLogger.info('✅ Deterministic match found via referrer!');
 
             final deferredResponse = DeferredLinkResponse.fromJson({
               ...response,
               'matchMethod': 'referrer',
             });
 
-            SmartLinkLogger.info('   Link: ${deferredResponse.shortCode}');
-            SmartLinkLogger.info(
+            LinkGravityLogger.info('   Link: ${deferredResponse.shortCode}');
+            LinkGravityLogger.info(
                 '   Deep Link: ${deferredResponse.deepLinkUrl}');
 
             return deferredResponse;
           }
         }
 
-        SmartLinkLogger.debug(
+        LinkGravityLogger.debug(
             'Referrer lookup failed, falling back to fingerprint...');
       }
 
       // Step 2: Fall back to fingerprint matching (iOS always, Android fallback)
-      SmartLinkLogger.info('Using fingerprint matching...');
+      LinkGravityLogger.info('Using fingerprint matching...');
 
       final fingerprint = await _gatherFingerprint();
-      SmartLinkLogger.debug(
+      LinkGravityLogger.debug(
           'Collected fingerprint: ${fingerprint.platform} ${fingerprint.model}');
 
       final response = await apiService.matchLink(fingerprint);
 
       if (response != null && response['success'] == true) {
-        SmartLinkLogger.info('✅ Probabilistic match found via fingerprint');
+        LinkGravityLogger.info('✅ Probabilistic match found via fingerprint');
 
         return DeferredLinkResponse.fromJson({
           ...response,
@@ -181,10 +181,10 @@ class DeferredDeepLinkService {
         });
       }
 
-      SmartLinkLogger.info('No deferred deep link found');
+      LinkGravityLogger.info('No deferred deep link found');
       return null;
     } catch (e, stackTrace) {
-      SmartLinkLogger.error('Error matching deferred deep link', e, stackTrace);
+      LinkGravityLogger.error('Error matching deferred deep link', e, stackTrace);
       return null;
     }
   }
@@ -194,28 +194,28 @@ class DeferredDeepLinkService {
   /// Returns a DeepLinkMatch if a match is found, null otherwise
   Future<DeepLinkMatch?> matchDeepLink() async {
     try {
-      SmartLinkLogger.debug('Attempting to match deferred deep link');
+      LinkGravityLogger.debug('Attempting to match deferred deep link');
 
       final fingerprint = await _gatherFingerprint();
-      SmartLinkLogger.debug(
+      LinkGravityLogger.debug(
           'Collected fingerprint: ${fingerprint.platform} ${fingerprint.model}');
 
       // Call backend match endpoint
       final response = await apiService.matchLink(fingerprint);
 
       if (response == null) {
-        SmartLinkLogger.debug('No match response from backend');
+        LinkGravityLogger.debug('No match response from backend');
         return null;
       }
 
       final match = DeepLinkMatch.fromJson(response);
-      SmartLinkLogger.info(
+      LinkGravityLogger.info(
         'Deep link match result: confidence=${match.confidence}, score=${match.score}',
       );
 
       return match;
     } catch (e) {
-      SmartLinkLogger.error('Error matching deferred deep link', e);
+      LinkGravityLogger.error('Error matching deferred deep link', e);
       return null;
     }
   }
@@ -253,7 +253,7 @@ class DeferredDeepLinkService {
         // IDFV is optional - only collect if privacy controls allow
         idfv = iosInfo.identifierForVendor;
 
-        SmartLinkLogger.debug(
+        LinkGravityLogger.debug(
           'iOS device: model=$model, osVersion=$osVersion',
         );
       } else if (Platform.isAndroid) {
@@ -264,7 +264,7 @@ class DeferredDeepLinkService {
         // Android: No IDFV equivalent in privacy-first approach
         idfv = null;
 
-        SmartLinkLogger.debug(
+        LinkGravityLogger.debug(
           'Android device: model=$model, osVersion=$osVersion',
         );
       } else {
@@ -283,7 +283,7 @@ class DeferredDeepLinkService {
         timestamp: now.toIso8601String(),
       );
     } catch (e) {
-      SmartLinkLogger.error('Error gathering fingerprint', e);
+      LinkGravityLogger.error('Error gathering fingerprint', e);
 
       // Return minimal fallback fingerprint
       return SDKFingerprint(
@@ -318,7 +318,7 @@ class DeferredDeepLinkService {
         return '${locales[0].languageCode}-${locales[0].countryCode}';
       }
     } catch (e) {
-      SmartLinkLogger.debug('Could not get platform locale: $e');
+      LinkGravityLogger.debug('Could not get platform locale: $e');
     }
 
     return 'en-US';

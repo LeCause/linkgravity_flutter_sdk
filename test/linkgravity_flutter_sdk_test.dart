@@ -1,27 +1,27 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smartlink_flutter_sdk/smartlink_flutter_sdk.dart';
+import 'package:linkgravity_flutter_sdk/linkgravity_flutter_sdk.dart';
 
 // Generate mocks with: flutter pub run build_runner build
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('SmartLink Models', () {
-    test('SmartLink fromJson/toJson', () {
+  group('LinkGravity Models', () {
+    test('LinkGravity fromJson/toJson', () {
       final json = {
         'id': 'link-123',
         'shortCode': 'abc123',
-        'shortUrl': 'https://smartlink.io/abc123',
+        'shortUrl': 'https://linkgravity.io/abc123',
         'longUrl': 'https://example.com/product/123',
         'title': 'Test Link',
         'active': true,
         'createdAt': '2025-11-19T10:00:00.000Z',
       };
 
-      final link = SmartLink.fromJson(json);
+      final link = LinkGravity.fromJson(json);
 
       expect(link.id, 'link-123');
       expect(link.shortCode, 'abc123');
-      expect(link.shortUrl, 'https://smartlink.io/abc123');
+      expect(link.shortUrl, 'https://linkgravity.io/abc123');
       expect(link.longUrl, 'https://example.com/product/123');
       expect(link.title, 'Test Link');
       expect(link.active, true);
@@ -51,10 +51,10 @@ void main() {
     });
 
     test('DeepLinkData fromUri', () {
-      final uri = Uri.parse('smartlink://host/product/123?ref=campaign');
+      final uri = Uri.parse('linkgravity://host/product/123?ref=campaign');
       final deepLink = DeepLinkData.fromUri(uri);
 
-      expect(deepLink.scheme, 'smartlink');
+      expect(deepLink.scheme, 'linkgravity');
       expect(deepLink.path, '/product/123');
       expect(deepLink.params['ref'], 'campaign');
     });
@@ -84,9 +84,9 @@ void main() {
     });
   });
 
-  group('SmartLinkConfig', () {
+  group('LinkGravityConfig', () {
     test('default config', () {
-      final config = SmartLinkConfig();
+      final config = LinkGravityConfig();
 
       expect(config.enableAnalytics, true);
       expect(config.enableDeepLinking, true);
@@ -97,7 +97,7 @@ void main() {
     });
 
     test('custom config', () {
-      final config = SmartLinkConfig(
+      final config = LinkGravityConfig(
         enableAnalytics: false,
         batchSize: 50,
         logLevel: LogLevel.debug,
@@ -109,7 +109,7 @@ void main() {
     });
 
     test('copyWith', () {
-      final config1 = SmartLinkConfig();
+      final config1 = LinkGravityConfig();
       final config2 = config1.copyWith(
         enableAnalytics: false,
         batchSize: 100,

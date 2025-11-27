@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="smartlink_flutter_sdk_example"
+        android:label="linkgravity_flutter_sdk_example"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

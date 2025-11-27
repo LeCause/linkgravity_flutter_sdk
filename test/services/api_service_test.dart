@@ -2,13 +2,13 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:smartlink_flutter_sdk/src/services/api_service.dart';
+import 'package:linkgravity_flutter_sdk/src/services/api_service.dart';
 
 void main() {
   group('ApiService Authentication', () {
     test('should use Authorization Bearer header for API key', () {
       final apiService = ApiService(
-        baseUrl: 'https://api.smartlink.io',
+        baseUrl: 'https://api.linkgravity.io',
         apiKey: 'pk_test_123',
       );
 
@@ -20,7 +20,7 @@ void main() {
 
     test('should not include Authorization header when apiKey is null', () {
       final apiService = ApiService(
-        baseUrl: 'https://api.smartlink.io',
+        baseUrl: 'https://api.linkgravity.io',
       );
 
       final headerMap = apiService.headers;
@@ -31,7 +31,7 @@ void main() {
 
     test('should include standard Content-Type and Accept headers', () {
       final apiService = ApiService(
-        baseUrl: 'https://api.smartlink.io',
+        baseUrl: 'https://api.linkgravity.io',
         apiKey: 'pk_test_123',
       );
 
@@ -44,7 +44,7 @@ void main() {
     test('should support custom timeout configuration', () {
       const customTimeout = Duration(seconds: 20);
       final apiService = ApiService(
-        baseUrl: 'https://api.smartlink.io',
+        baseUrl: 'https://api.linkgravity.io',
         apiKey: 'pk_test_123',
         timeout: customTimeout,
       );
@@ -54,7 +54,7 @@ void main() {
 
     test('should use default 15-second timeout', () {
       final apiService = ApiService(
-        baseUrl: 'https://api.smartlink.io',
+        baseUrl: 'https://api.linkgravity.io',
         apiKey: 'pk_test_123',
       );
 
@@ -70,7 +70,7 @@ void main() {
 
       for (final apiKey in testCases) {
         final apiService = ApiService(
-          baseUrl: 'https://api.smartlink.io',
+          baseUrl: 'https://api.linkgravity.io',
           apiKey: apiKey,
         );
 
@@ -125,7 +125,7 @@ void main() {
       });
 
       final apiService = ApiService(
-        baseUrl: 'https://api.smartlink.io',
+        baseUrl: 'https://api.linkgravity.io',
         apiKey: 'pk_test_123',
         client: mockClient,
       );
@@ -148,7 +148,7 @@ void main() {
       });
 
       final apiService = ApiService(
-        baseUrl: 'https://api.smartlink.io',
+        baseUrl: 'https://api.linkgravity.io',
         apiKey: 'pk_test_123',
         client: mockClient,
       );
@@ -171,7 +171,7 @@ void main() {
       });
 
       final apiService = ApiService(
-        baseUrl: 'https://api.smartlink.io',
+        baseUrl: 'https://api.linkgravity.io',
         apiKey: 'pk_test_123',
         client: mockClient,
       );
@@ -199,7 +199,7 @@ void main() {
       });
 
       final apiService = ApiService(
-        baseUrl: 'https://api.smartlink.io',
+        baseUrl: 'https://api.linkgravity.io',
         apiKey: 'pk_test_123',
         client: mockClient,
       );

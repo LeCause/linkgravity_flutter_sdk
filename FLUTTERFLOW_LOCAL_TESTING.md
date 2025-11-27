@@ -1,10 +1,10 @@
-# FlutterFlow Local Testing Guide - SmartLink SDK
+# FlutterFlow Local Testing Guide - LinkGravity SDK
 
-This guide explains how to test the SmartLink SDK locally in your FlutterFlow app with deferred deep linking.
+This guide explains how to test the LinkGravity SDK locally in your FlutterFlow app with deferred deep linking.
 
 ## 📋 Testing Scenario
 
-**Goal**: Test deferred deep linking with a hidden page that's only accessible via SmartLink.
+**Goal**: Test deferred deep linking with a hidden page that's only accessible via LinkGravity.
 
 **Flow**:
 1. **App NOT installed**: Click link → App Store/Play Store → Install → Open app → Navigate to hidden page
@@ -17,7 +17,7 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
 ## 🔧 Prerequisites
 
 ### Backend Setup
-1. **Start SmartLink Backend** (on your local machine):
+1. **Start LinkGravity Backend** (on your local machine):
    ```bash
    cd backend
    npm run dev
@@ -37,20 +37,20 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
 
 ### SDK Setup
 1. **Verify SDK is published** (if using GitHub dependency):
-   - SDK is automatically fetched from GitHub: `https://github.com/LeCause/smart-link-flutter-sdk.git`
+   - SDK is automatically fetched from GitHub: `https://github.com/LeCause/linkgravity-flutter-sdk.git`
    - No manual setup required if using Git dependency
    - FlutterFlow will handle fetching and building
 
 2. **For Local Development** (if you want to modify SDK code):
    ```bash
-   cd smart-link-flutter-sdk
+   cd linkgravity-flutter-sdk
    flutter pub get
    flutter test  # Verify all tests pass
    ```
    Then update pubspec.yaml to use path dependency:
    ```yaml
-   smartlink_flutter_sdk:
-     path: /absolute/path/to/smart-link-flutter-sdk
+   linkgravity_flutter_sdk:
+     path: /absolute/path/to/linkgravity-flutter-sdk
    ```
 
 ---
@@ -68,9 +68,9 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
 4. **Add SDK as Git dependency**:
    ```yaml
    dependencies:
-     smartlink_flutter_sdk:
+     linkgravity_flutter_sdk:
        git:
-         url: https://github.com/LeCause/smart-link-flutter-sdk.git
+         url: https://github.com/LeCause/linkgravity-flutter-sdk.git
          ref: main
    ```
 
@@ -83,7 +83,7 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
    - Ensure you have internet access for GitHub
    - FlutterFlow will fetch and build from GitHub automatically
    - First build may take longer due to cloning the repository
-   - For local development, use path dependency instead: `path: /path/to/smart-link-flutter-sdk`
+   - For local development, use path dependency instead: `path: /path/to/linkgravity-flutter-sdk`
 
 5. **Click "Save"** and wait for dependencies to resolve (this may take 1-2 minutes)
 
@@ -101,22 +101,22 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
 
 4. **Design the page** as you like
 
-### Step 3: Initialize SmartLink SDK
+### Step 3: Initialize LinkGravity SDK
 
 1. **Go to App Settings** → **Custom Code**
 
-2. **Add Custom Action** → Name: `initializeSmartLink`
+2. **Add Custom Action** → Name: `initializeLinkGravity`
 
 3. **Action Code**:
    ```dart
-   import 'package:smartlink_flutter_sdk/smartlink_flutter_sdk.dart';
+   import 'package:linkgravity_flutter_sdk/linkgravity_flutter_sdk.dart';
 
-   Future<bool> initializeSmartLink() async {
+   Future<bool> initializeLinkGravity() async {
      try {
-       await SmartLinkClient.initialize(
+       await LinkGravityClient.initialize(
          baseUrl: 'http://YOUR_LOCAL_IP:3000',  // Replace with your IP!
          apiKey: 'demo-api-key',
-         config: SmartLinkConfig(
+         config: LinkGravityConfig(
            enableAnalytics: true,
            enableDeepLinking: true,
            logLevel: LogLevel.debug,
@@ -124,10 +124,10 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
          ),
        );
 
-       print('✅ SmartLink initialized successfully');
+       print('✅ LinkGravity initialized successfully');
        return true;
      } catch (e) {
-       print('❌ SmartLink initialization failed: $e');
+       print('❌ LinkGravity initialization failed: $e');
        return false;
      }
    }
@@ -147,11 +147,11 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
 
 2. **Action Code**:
    ```dart
-   import 'package:smartlink_flutter_sdk/smartlink_flutter_sdk.dart';
+   import 'package:linkgravity_flutter_sdk/linkgravity_flutter_sdk.dart';
 
    Future<void> setupDeepLinkListener(BuildContext context) async {
      // Listen for deep links
-     SmartLinkClient.instance.onDeepLink.listen((deepLink) {
+     LinkGravityClient.instance.onDeepLink.listen((deepLink) {
        print('🔗 Deep link received: ${deepLink.path}');
 
        // Parse the path
@@ -181,12 +181,12 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
 
 1. **Go to App Settings** → **On App Start**
 
-2. **Add Action**: Custom Action → `initializeSmartLink`
+2. **Add Action**: Custom Action → `initializeLinkGravity`
 
 3. **Add Action**: Custom Action → `setupDeepLinkListener`
 
 4. **Order matters**:
-   - First: `initializeSmartLink`
+   - First: `initializeLinkGravity`
    - Second: `setupDeepLinkListener`
 
 ### Step 6: Platform-Specific Setup
@@ -211,7 +211,7 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
      <dict>
        <key>CFBundleURLSchemes</key>
        <array>
-         <string>smartlinktest</string>
+         <string>linkgravitytest</string>
        </array>
      </dict>
    </array>
@@ -237,7 +237,7 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
      <category android:name="android.intent.category.DEFAULT" />
      <category android:name="android.intent.category.BROWSABLE" />
 
-     <data android:scheme="smartlinktest" />
+     <data android:scheme="linkgravitytest" />
    </intent-filter>
    ```
 
@@ -251,7 +251,7 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
 
 ## 🧪 Testing the Flow
 
-### Test 1: Create SmartLink (via Backend API)
+### Test 1: Create LinkGravity (via Backend API)
 
 1. **Open Terminal/Postman**
 
@@ -265,7 +265,7 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
        "title": "Test Hidden Page Link",
        "deepLinkConfig": {
          "deepLinkPath": "/hidden",
-         "customScheme": "smartlinktest"
+         "customScheme": "linkgravitytest"
        }
      }'
    ```
@@ -321,19 +321,19 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
    ```
 
 3. **Expected behavior**:
-   - Browser redirects to: `smartlinktest://hidden`
+   - Browser redirects to: `linkgravitytest://hidden`
    - OS prompts: "Open in [Your App]?"
    - App opens and navigates to hidden page
 
 ### Test 4: Custom URL Scheme (Direct)
 
-**Scenario**: Test deep link directly without SmartLink redirect
+**Scenario**: Test deep link directly without LinkGravity redirect
 
 1. **Open Safari (iOS) or Chrome (Android)**
 
 2. **Enter in address bar**:
    ```
-   smartlinktest://hidden?ref=test123
+   linkgravitytest://hidden?ref=test123
    ```
 
 3. **Expected**:
@@ -354,7 +354,7 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
 
 2. **Look for**:
    ```
-   ✅ SmartLink initialized successfully
+   ✅ LinkGravity initialized successfully
    ✅ Deep link listener setup complete
    Fingerprint: abc123def456...
    Session ID: xyz789...
@@ -379,11 +379,11 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
 - Disable firewall temporarily
 - Test backend accessibility: `curl http://YOUR_IP:3000/api/health`
 
-#### ❌ "SmartLink not initialized"
+#### ❌ "LinkGravity not initialized"
 
 **Solution**:
 - Check Custom Action code
-- Verify `initializeSmartLink` is called in "On App Start"
+- Verify `initializeLinkGravity` is called in "On App Start"
 - Check baseUrl is correct
 - Restart app
 
@@ -396,7 +396,7 @@ This guide explains how to test the SmartLink SDK locally in your FlutterFlow ap
 
 **Android**:
 - Verify `AndroidManifest.xml` has intent-filter
-- Verify scheme matches (e.g., `smartlinktest`)
+- Verify scheme matches (e.g., `linkgravitytest`)
 - Rebuild app: `flutter run`
 
 #### ❌ App opens but doesn't navigate
@@ -447,7 +447,7 @@ Before testing:
 - [ ] App built and installed
 
 Testing:
-- [ ] Create SmartLink via API
+- [ ] Create LinkGravity via API
 - [ ] Test deferred deep link (uninstall → click → install → open)
 - [ ] Test direct deep link (app installed → click link)
 - [ ] Test custom URL scheme (direct)
@@ -461,7 +461,7 @@ Testing:
 Once local testing works:
 
 1. **SDK Updates**:
-   - SmartLink SDK is maintained on GitHub: `https://github.com/LeCause/smart-link-flutter-sdk`
+   - LinkGravity SDK is maintained on GitHub: `https://github.com/LeCause/linkgravity-flutter-sdk`
    - FlutterFlow will auto-fetch latest from GitHub
    - To use specific version: Change `ref: main` to `ref: v1.1.0` (or any version tag)
    - To use development builds: Change `ref: main` to `ref: develop`
@@ -501,7 +501,7 @@ Once local testing works:
 A: No, use your local IP address (e.g., `192.168.1.100`) so mobile devices can connect.
 
 **Q: Where is the SDK hosted?**
-A: SmartLink SDK is hosted on GitHub: `https://github.com/LeCause/smart-link-flutter-sdk`
+A: LinkGravity SDK is hosted on GitHub: `https://github.com/LeCause/linkgravity-flutter-sdk`
    FlutterFlow automatically fetches from GitHub when using Git dependency.
 
 **Q: Can I use a different version of the SDK?**
@@ -512,8 +512,8 @@ A: Yes! Update the `ref` in pubspec.yaml:
 
 **Q: How do I switch between GitHub and local development?**
 A:
-   - **GitHub (Remote)**: `git: { url: https://github.com/LeCause/smart-link-flutter-sdk.git, ref: main }`
-   - **Local (Development)**: `path: /absolute/path/to/smart-link-flutter-sdk`
+   - **GitHub (Remote)**: `git: { url: https://github.com/LeCause/linkgravity-flutter-sdk.git, ref: main }`
+   - **Local (Development)**: `path: /absolute/path/to/linkgravity-flutter-sdk`
 
 **Q: Can I test in FlutterFlow's Test Mode?**
 A: Deep linking won't work in Test Mode. You must download code and build locally.

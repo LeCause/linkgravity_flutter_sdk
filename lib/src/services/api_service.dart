@@ -18,9 +18,9 @@ class ApiException implements Exception {
   String toString() => 'ApiException: $message (status: $statusCode)';
 }
 
-/// Service for communicating with SmartLink Backend API
+/// Service for communicating with LinkGravity Backend API
 class ApiService {
-  /// Base URL of the SmartLink backend (e.g., "https://api.smartlink.io")
+  /// Base URL of the LinkGravity backend (e.g., "https://api.linkgravity.io")
   final String baseUrl;
 
   /// API Key for authentication
@@ -72,14 +72,14 @@ class ApiService {
         uri = uri.replace(queryParameters: queryParams);
       }
 
-      SmartLinkLogger.debug('GET $uri');
+      LinkGravityLogger.debug('GET $uri');
 
       final response =
           await client.get(uri, headers: headers).timeout(timeout);
 
       return _handleResponse(response);
     } catch (e) {
-      SmartLinkLogger.error('GET request failed: $path', e);
+      LinkGravityLogger.error('GET request failed: $path', e);
       rethrow;
     }
   }
@@ -90,8 +90,8 @@ class ApiService {
     try {
       final uri = Uri.parse(_buildUrl(path));
 
-      SmartLinkLogger.debug('POST $uri');
-      SmartLinkLogger.verbose('Request body: $body');
+      LinkGravityLogger.debug('POST $uri');
+      LinkGravityLogger.verbose('Request body: $body');
 
       final response = await client
           .post(
@@ -103,7 +103,7 @@ class ApiService {
 
       return _handleResponse(response);
     } catch (e) {
-      SmartLinkLogger.error('POST request failed: $path', e);
+      LinkGravityLogger.error('POST request failed: $path', e);
       rethrow;
     }
   }
@@ -114,7 +114,7 @@ class ApiService {
     try {
       final uri = Uri.parse(_buildUrl(path));
 
-      SmartLinkLogger.debug('PUT $uri');
+      LinkGravityLogger.debug('PUT $uri');
 
       final response = await client
           .put(
@@ -126,7 +126,7 @@ class ApiService {
 
       return _handleResponse(response);
     } catch (e) {
-      SmartLinkLogger.error('PUT request failed: $path', e);
+      LinkGravityLogger.error('PUT request failed: $path', e);
       rethrow;
     }
   }
@@ -136,21 +136,21 @@ class ApiService {
     try {
       final uri = Uri.parse(_buildUrl(path));
 
-      SmartLinkLogger.debug('DELETE $uri');
+      LinkGravityLogger.debug('DELETE $uri');
 
       final response =
           await client.delete(uri, headers: headers).timeout(timeout);
 
       _handleResponse(response);
     } catch (e) {
-      SmartLinkLogger.error('DELETE request failed: $path', e);
+      LinkGravityLogger.error('DELETE request failed: $path', e);
       rethrow;
     }
   }
 
   /// Handle HTTP response
   Map<String, dynamic> _handleResponse(http.Response response) {
-    SmartLinkLogger.debug('Response status: ${response.statusCode}');
+    LinkGravityLogger.debug('Response status: ${response.statusCode}');
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (response.body.isEmpty) {
@@ -160,7 +160,7 @@ class ApiService {
       try {
         return jsonDecode(response.body) as Map<String, dynamic>;
       } catch (e) {
-        SmartLinkLogger.error('Failed to parse response body', e);
+        LinkGravityLogger.error('Failed to parse response body', e);
         throw ApiException('Invalid JSON response');
       }
     } else {
@@ -186,9 +186,9 @@ class ApiService {
   // LINK MANAGEMENT
   // ============================================================================
 
-  /// Create a new SmartLink
+  /// Create a new LinkGravity
   /// POST /api/v1/links
-  Future<SmartLink> createLink(LinkParams params) async {
+  Future<LinkGravity> createLink(LinkParams params) async {
     if (!params.validate()) {
       throw ApiException('Invalid link parameters');
     }
@@ -196,7 +196,7 @@ class ApiService {
     final response = await _post('/api/v1/links', params.toJson());
 
     if (response['success'] == true && response['data'] != null) {
-      return SmartLink.fromJson(response['data'] as Map<String, dynamic>);
+      return LinkGravity.fromJson(response['data'] as Map<String, dynamic>);
     }
 
     throw ApiException('Failed to create link: ${response['message']}');
@@ -204,11 +204,11 @@ class ApiService {
 
   /// Get a specific link by ID
   /// GET /api/v1/links/:id
-  Future<SmartLink> getLink(String linkId) async {
+  Future<LinkGravity> getLink(String linkId) async {
     final response = await _get('/api/v1/links/$linkId');
 
     if (response['success'] == true && response['data'] != null) {
-      return SmartLink.fromJson(response['data'] as Map<String, dynamic>);
+      return LinkGravity.fromJson(response['data'] as Map<String, dynamic>);
     }
 
     throw ApiException('Failed to get link: ${response['message']}');
@@ -216,7 +216,7 @@ class ApiService {
 
   /// Get all links (with pagination)
   /// GET /api/v1/links
-  Future<List<SmartLink>> getLinks({
+  Future<List<LinkGravity>> getLinks({
     int? limit,
     int? offset,
     String? search,
@@ -231,7 +231,7 @@ class ApiService {
     if (response['success'] == true && response['data'] != null) {
       final linksData = response['data'] as List;
       return linksData
-          .map((json) => SmartLink.fromJson(json as Map<String, dynamic>))
+          .map((json) => LinkGravity.fromJson(json as Map<String, dynamic>))
           .toList();
     }
 
@@ -240,11 +240,11 @@ class ApiService {
 
   /// Update an existing link
   /// PUT /api/v1/links/:id
-  Future<SmartLink> updateLink(String linkId, LinkParams params) async {
+  Future<LinkGravity> updateLink(String linkId, LinkParams params) async {
     final response = await _put('/api/v1/links/$linkId', params.toJson());
 
     if (response['success'] == true && response['data'] != null) {
-      return SmartLink.fromJson(response['data'] as Map<String, dynamic>);
+      return LinkGravity.fromJson(response['data'] as Map<String, dynamic>);
     }
 
     throw ApiException('Failed to update link: ${response['message']}');
@@ -270,21 +270,21 @@ class ApiService {
   Future<Map<String, dynamic>?> getDeferredLinkByReferrer(
       String referrerToken) async {
     try {
-      SmartLinkLogger.debug(
+      LinkGravityLogger.debug(
           'Looking up deferred link by referrer token: ${referrerToken.substring(0, referrerToken.length > 20 ? 20 : referrerToken.length)}...');
 
       final response =
           await _get('/api/v1/sdk/deferred-link/referrer/$referrerToken');
 
       if (response['success'] == true) {
-        SmartLinkLogger.info('Deferred link found via referrer token');
+        LinkGravityLogger.info('Deferred link found via referrer token');
         return response;
       }
 
-      SmartLinkLogger.debug('No deferred link found for referrer token');
+      LinkGravityLogger.debug('No deferred link found for referrer token');
       return null;
     } catch (e) {
-      SmartLinkLogger.warning('No deferred link found for referrer token', e);
+      LinkGravityLogger.warning('No deferred link found for referrer token', e);
       return null;
     }
   }
@@ -307,7 +307,7 @@ class ApiService {
 
       return null;
     } catch (e) {
-      SmartLinkLogger.warning('No deferred link found', e);
+      LinkGravityLogger.warning('No deferred link found', e);
       return null;
     }
   }
@@ -349,10 +349,10 @@ class ApiService {
         if (matchScore != null) 'matchScore': matchScore,
       });
 
-      SmartLinkLogger.info('Installation tracked successfully');
+      LinkGravityLogger.info('Installation tracked successfully');
       return true;
     } catch (e) {
-      SmartLinkLogger.error('Error tracking installation: $e', e);
+      LinkGravityLogger.error('Error tracking installation: $e', e);
       return false;
     }
   }
@@ -406,11 +406,11 @@ class ApiService {
         if (metadata != null) 'metadata': metadata,
       });
 
-      SmartLinkLogger.info(
+      LinkGravityLogger.info(
           'Conversion tracked: $type${linkId != null ? ' for $linkId' : ''}');
       return true;
     } catch (e) {
-      SmartLinkLogger.error('Error tracking conversion: $e', e);
+      LinkGravityLogger.error('Error tracking conversion: $e', e);
       return false;
     }
   }
@@ -447,7 +447,7 @@ class ApiService {
       'events': eventsJson,
     });
 
-    SmartLinkLogger.info('Sent ${events.length} events to backend');
+    LinkGravityLogger.info('Sent ${events.length} events to backend');
   }
 
   /// Track single event
@@ -475,7 +475,7 @@ class ApiService {
   /// Requires public API key authentication
   Future<Map<String, dynamic>?> matchLink(dynamic fingerprint) async {
     try {
-      SmartLinkLogger.debug('Matching deferred deep link with fingerprint');
+      LinkGravityLogger.debug('Matching deferred deep link with fingerprint');
 
       final response = await _post(
         '/api/v1/sdk/match-link',
@@ -483,14 +483,14 @@ class ApiService {
       );
 
       if (response['success'] != true) {
-        SmartLinkLogger.debug('No match found for deferred deep link');
+        LinkGravityLogger.debug('No match found for deferred deep link');
         return null;
       }
 
-      SmartLinkLogger.info('Deferred deep link match found');
+      LinkGravityLogger.info('Deferred deep link match found');
       return response;
     } catch (e) {
-      SmartLinkLogger.warning('Error matching deferred deep link: $e');
+      LinkGravityLogger.warning('Error matching deferred deep link: $e');
       return null;
     }
   }

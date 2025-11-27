@@ -1,4 +1,4 @@
-group = "com.example.smartlink_flutter_sdk"
+group = "com.linkgravity.linkgravity_flutter_sdk"
 version = "1.0-SNAPSHOT"
 
 buildscript {
@@ -25,7 +25,7 @@ apply plugin: "com.android.library"
 apply plugin: "kotlin-android"
 
 android {
-    namespace = "com.example.smartlink_flutter_sdk"
+    namespace = "com.linkgravity.linkgravity_flutter_sdk"
 
     compileSdk = 35
 

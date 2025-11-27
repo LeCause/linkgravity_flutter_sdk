@@ -1,4 +1,4 @@
-/// Input validation utilities for SmartLink SDK
+/// Input validation utilities for LinkGravity SDK
 class Validators {
   /// Validate URL format
   static bool isValidUrl(String url) {

@@ -1,4 +1,4 @@
-package com.smartlink.smartlink_flutter_sdk
+package com.linkgravity.linkgravity_flutter_sdk
 
 import android.content.Context
 import android.os.RemoteException
@@ -13,7 +13,7 @@ import com.android.installreferrer.api.ReferrerDetails
  * which contains the deferred deep link token for deterministic matching.
  *
  * The Play Install Referrer API provides 100% accurate attribution for
- * Android installs that originate from SmartLinks.
+ * Android installs that originate from LinkGravity links.
  */
 class InstallReferrerHandler(private val context: Context) {
     private var referrerClient: InstallReferrerClient? = null

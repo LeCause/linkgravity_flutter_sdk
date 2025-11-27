@@ -1,13 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-import 'smartlink_flutter_sdk_platform_interface.dart';
+import 'linkgravity_flutter_sdk_platform_interface.dart';
 
-/// An implementation of [SmartlinkFlutterSdkPlatform] that uses method channels.
-class MethodChannelSmartlinkFlutterSdk extends SmartlinkFlutterSdkPlatform {
+/// An implementation of [LinkGravityFlutterSdkPlatform] that uses method channels.
+class MethodChannelLinkGravityFlutterSdk extends LinkGravityFlutterSdkPlatform {
   /// The method channel used to interact with the native platform.
   @visibleForTesting
-  final methodChannel = const MethodChannel('smartlink_flutter_sdk');
+  final methodChannel = const MethodChannel('linkgravity_flutter_sdk');
 
   @override
   Future<String?> getPlatformVersion() async {

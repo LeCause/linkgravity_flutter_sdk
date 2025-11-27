@@ -1,4 +1,4 @@
-package com.example.smartlink_flutter_sdk_example
+package com.linkgravity.linkgravity_flutter_sdk_example
 
 import io.flutter.embedding.android.FlutterActivity
 

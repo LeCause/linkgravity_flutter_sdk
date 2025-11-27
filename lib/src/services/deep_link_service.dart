@@ -33,40 +33,40 @@ class DeepLinkService {
   /// Initialize deep link handling
   Future<void> initialize() async {
     if (_initialized) {
-      SmartLinkLogger.warning('DeepLinkService already initialized');
+      LinkGravityLogger.warning('DeepLinkService already initialized');
       return;
     }
 
-    SmartLinkLogger.info('Initializing deep link service...');
+    LinkGravityLogger.info('Initializing deep link service...');
 
     try {
       // Get initial link (app opened from cold state via deep link)
       final initialUri = await _appLinks.getInitialLink();
 
       if (initialUri != null) {
-        SmartLinkLogger.info('Initial link detected: $initialUri');
+        LinkGravityLogger.info('Initial link detected: $initialUri');
         _initialLink = DeepLinkData.fromUri(initialUri);
         linkController.add(_initialLink!);
       } else {
-        SmartLinkLogger.debug('No initial link found');
+        LinkGravityLogger.debug('No initial link found');
       }
 
       // Listen for incoming links (app opened from warm/hot state)
       _subscription = _appLinks.uriLinkStream.listen(
         (Uri uri) {
-          SmartLinkLogger.info('Deep link received: $uri');
+          LinkGravityLogger.info('Deep link received: $uri');
           final deepLink = DeepLinkData.fromUri(uri);
           linkController.add(deepLink);
         },
         onError: (Object err, StackTrace stackTrace) {
-          SmartLinkLogger.error('Deep link stream error', err, stackTrace);
+          LinkGravityLogger.error('Deep link stream error', err, stackTrace);
         },
       );
 
       _initialized = true;
-      SmartLinkLogger.info('Deep link service initialized successfully');
+      LinkGravityLogger.info('Deep link service initialized successfully');
     } catch (e, stackTrace) {
-      SmartLinkLogger.error(
+      LinkGravityLogger.error(
           'Failed to initialize deep link service', e, stackTrace);
       rethrow;
     }
@@ -91,7 +91,7 @@ class DeepLinkService {
   }
 
   /// Extract link ID from deep link if present
-  /// Example: smartlink://link/abc123 -> "abc123"
+  /// Example: linkgravity://link/abc123 -> "abc123"
   String? extractLinkId(DeepLinkData deepLink) {
     // Check path for link ID
     if (deepLink.path.startsWith('/link/')) {
@@ -109,6 +109,6 @@ class DeepLinkService {
   void dispose() {
     _subscription?.cancel();
     linkController.close();
-    SmartLinkLogger.debug('DeepLinkService disposed');
+    LinkGravityLogger.debug('DeepLinkService disposed');
   }
 }

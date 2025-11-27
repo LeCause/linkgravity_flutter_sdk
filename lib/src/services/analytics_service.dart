@@ -67,7 +67,7 @@ class AnalyticsService {
 
   /// Initialize analytics service
   Future<void> initialize() async {
-    SmartLinkLogger.info('Initializing analytics service...');
+    LinkGravityLogger.info('Initializing analytics service...');
 
     // Load cached IDs
     _userId = await _storage.getUserId();
@@ -85,7 +85,7 @@ class AnalyticsService {
     // Retry failed events from previous sessions
     await _retryFailedEvents();
 
-    SmartLinkLogger.info('Analytics service initialized');
+    LinkGravityLogger.info('Analytics service initialized');
   }
 
   /// Load cached UTM parameters from install
@@ -96,7 +96,7 @@ class AnalyticsService {
     if (_installReferrer != null) {
       _cachedUTM = await _installReferrer!.getCachedInstallUTM();
       if (_cachedUTM != null && _cachedUTM!.isNotEmpty) {
-        SmartLinkLogger.info('Loaded install UTM for attribution: $_cachedUTM');
+        LinkGravityLogger.info('Loaded install UTM for attribution: $_cachedUTM');
       }
     }
   }
@@ -105,7 +105,7 @@ class AnalyticsService {
   Future<void> _startNewSession() async {
     _sessionId = const Uuid().v4();
     await _storage.saveSessionId(_sessionId!);
-    SmartLinkLogger.debug('New session started: $_sessionId');
+    LinkGravityLogger.debug('New session started: $_sessionId');
   }
 
   /// Setup connectivity monitoring
@@ -116,12 +116,12 @@ class AnalyticsService {
         _isOnline = results.isNotEmpty &&
             results.any((result) => result != ConnectivityResult.none);
 
-        SmartLinkLogger.debug(
+        LinkGravityLogger.debug(
             'Connectivity changed: ${_isOnline ? "online" : "offline"}');
 
         // If we just came online, retry failed events
         if (wasOffline && _isOnline) {
-          SmartLinkLogger.info('Connection restored, retrying failed events');
+          LinkGravityLogger.info('Connection restored, retrying failed events');
           _retryFailedEvents();
         }
       },
@@ -131,7 +131,7 @@ class AnalyticsService {
     _connectivity.checkConnectivity().then((results) {
       _isOnline = results.isNotEmpty &&
           results.any((result) => result != ConnectivityResult.none);
-      SmartLinkLogger.debug(
+      LinkGravityLogger.debug(
           'Initial connectivity: ${_isOnline ? "online" : "offline"}');
     });
   }
@@ -151,7 +151,7 @@ class AnalyticsService {
     Map<String, dynamic>? properties,
   ]) async {
     if (!enabled) {
-      SmartLinkLogger.debug(
+      LinkGravityLogger.debug(
           'Analytics disabled, event not tracked: $eventName');
       return;
     }
@@ -175,7 +175,7 @@ class AnalyticsService {
     );
 
     _eventQueue.add(event);
-    SmartLinkLogger.debug(
+    LinkGravityLogger.debug(
         'Event tracked: $eventName (queue size: ${_eventQueue.length})');
 
     // Check if we should flush
@@ -191,17 +191,17 @@ class AnalyticsService {
     _userId = userId;
     if (userId != null) {
       await _storage.saveUserId(userId);
-      SmartLinkLogger.info('User ID set: $userId');
+      LinkGravityLogger.info('User ID set: $userId');
     } else {
       await _storage.clearUserId();
-      SmartLinkLogger.info('User ID cleared');
+      LinkGravityLogger.info('User ID cleared');
     }
   }
 
   /// Set device fingerprint
   void setFingerprint(String fingerprint) {
     _fingerprint = fingerprint;
-    SmartLinkLogger.debug('Fingerprint set');
+    LinkGravityLogger.debug('Fingerprint set');
   }
 
   /// Manually flush event queue
@@ -209,32 +209,32 @@ class AnalyticsService {
     _batchTimer?.cancel();
 
     if (_eventQueue.isEmpty) {
-      SmartLinkLogger.debug('Event queue is empty, nothing to flush');
+      LinkGravityLogger.debug('Event queue is empty, nothing to flush');
       return;
     }
 
     final events = List<AnalyticsEvent>.from(_eventQueue);
     _eventQueue.clear();
 
-    SmartLinkLogger.info('Flushing ${events.length} events...');
+    LinkGravityLogger.info('Flushing ${events.length} events...');
 
     try {
       if (_isOnline) {
         await _api.sendBatch(events);
         await _storage.saveLastEventSync();
-        SmartLinkLogger.info('Successfully sent ${events.length} events');
+        LinkGravityLogger.info('Successfully sent ${events.length} events');
       } else {
         throw Exception('No internet connection');
       }
     } catch (e) {
-      SmartLinkLogger.error('Failed to send events batch', e);
+      LinkGravityLogger.error('Failed to send events batch', e);
 
       // Store failed events for retry if offline queue is enabled
       if (offlineQueueEnabled) {
         await _storage.saveFailedEvents(events);
-        SmartLinkLogger.info('Saved ${events.length} events to offline queue');
+        LinkGravityLogger.info('Saved ${events.length} events to offline queue');
       } else {
-        SmartLinkLogger.warning(
+        LinkGravityLogger.warning(
             'Offline queue disabled, ${events.length} events lost');
       }
     }
@@ -244,7 +244,7 @@ class AnalyticsService {
   void _scheduleBatchFlush() {
     _batchTimer?.cancel();
     _batchTimer = Timer(batchTimeout, () {
-      SmartLinkLogger.debug('Batch timeout reached, flushing events');
+      LinkGravityLogger.debug('Batch timeout reached, flushing events');
       flush();
     });
   }
@@ -256,19 +256,19 @@ class AnalyticsService {
     final failed = await _storage.getFailedEvents();
     if (failed.isEmpty) return;
 
-    SmartLinkLogger.info('Retrying ${failed.length} failed events...');
+    LinkGravityLogger.info('Retrying ${failed.length} failed events...');
 
     try {
       if (_isOnline) {
         await _api.sendBatch(failed);
         await _storage.clearFailedEvents();
-        SmartLinkLogger.info(
+        LinkGravityLogger.info(
             'Successfully sent ${failed.length} failed events');
       } else {
-        SmartLinkLogger.debug('Still offline, failed events remain queued');
+        LinkGravityLogger.debug('Still offline, failed events remain queued');
       }
     } catch (e) {
-      SmartLinkLogger.error('Failed to retry events', e);
+      LinkGravityLogger.error('Failed to retry events', e);
       // Events remain in storage for next retry
     }
   }
@@ -281,7 +281,7 @@ class AnalyticsService {
   /// Clear all failed events
   Future<void> clearFailedEvents() async {
     await _storage.clearFailedEvents();
-    SmartLinkLogger.info('Cleared all failed events');
+    LinkGravityLogger.info('Cleared all failed events');
   }
 
   /// Get current session ID
@@ -317,9 +317,9 @@ class AnalyticsService {
   void setUTM(UTMParams? utm) {
     _cachedUTM = utm;
     if (utm != null && utm.isNotEmpty) {
-      SmartLinkLogger.info('UTM attribution set: $utm');
+      LinkGravityLogger.info('UTM attribution set: $utm');
     } else {
-      SmartLinkLogger.info('UTM attribution cleared');
+      LinkGravityLogger.info('UTM attribution cleared');
     }
   }
 
@@ -333,6 +333,6 @@ class AnalyticsService {
       await flush();
     }
 
-    SmartLinkLogger.debug('AnalyticsService disposed');
+    LinkGravityLogger.debug('AnalyticsService disposed');
   }
 }

@@ -1,7 +1,7 @@
-name: smartlink_flutter_sdk
-description: SmartLink Flutter SDK for deferred deep linking, link generation, and app-to-app attribution. Compatible with FlutterFlow.
+name: linkgravity_flutter_sdk
+description: LinkGravity Flutter SDK for deferred deep linking, link generation, and app-to-app attribution. Compatible with FlutterFlow.
 version: 1.0.0
-homepage: https://github.com/yourusername/smartlink_flutter_sdk
+homepage: https://github.com/yourusername/linkgravity_flutter_sdk
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -58,7 +58,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.smartlink.smartlink_flutter_sdk
-        pluginClass: SmartlinkFlutterSdkPlugin
+        package: com.linkgravity.linkgravity_flutter_sdk
+        pluginClass: LinkGravityFlutterSdkPlugin
       ios:
-        pluginClass: SmartlinkFlutterSdkPlugin
+        pluginClass: LinkGravityFlutterSdkPlugin

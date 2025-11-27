@@ -1,13 +1,13 @@
-# SmartLink Flutter SDK
+# LinkGravity Flutter SDK
 
-[![Pub Version](https://img.shields.io/pub/v/smartlink_flutter_sdk)](https://pub.dev/packages/smartlink_flutter_sdk)
+[![Pub Version](https://img.shields.io/pub/v/linkgravity_flutter_sdk)](https://pub.dev/packages/linkgravity_flutter_sdk)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A comprehensive Flutter SDK for **deferred deep linking**, **link generation**, and **app-to-app attribution**. Fully compatible with **FlutterFlow**.
 
 ## Features
 
-- Link Generation - Create SmartLinks programmatically
+- Link Generation - Create LinkGravity links programmatically
 - Deep Link Handling - Universal Links (iOS) & App Links (Android)
 - Deferred Deep Linking - Attribution matching after app install
   - **Android**: Play Install Referrer API (100% deterministic matching)
@@ -30,7 +30,7 @@ Add to your pubspec.yaml:
 
 ```yaml
 dependencies:
-  smartlink_flutter_sdk: ^1.0.0
+  linkgravity_flutter_sdk: ^1.0.0
 ```
 
 Then run: `flutter pub get`
@@ -40,13 +40,13 @@ Then run: `flutter pub get`
 ### Initialize the SDK
 
 ```dart
-import 'package:smartlink_flutter_sdk/smartlink_flutter_sdk.dart';
+import 'package:linkgravity_flutter_sdk/linkgravity_flutter_sdk.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await SmartLinkClient.initialize(
-    baseUrl: 'https://api.smartlink.io',
+  await LinkGravityClient.initialize(
+    baseUrl: 'https://api.linkgravity.io',
     apiKey: 'your-api-key',
   );
 
@@ -57,7 +57,7 @@ void main() async {
 ### Create a Link
 
 ```dart
-final link = await SmartLinkClient.instance.createLink(
+final link = await LinkGravityClient.instance.createLink(
   LinkParams(
     longUrl: 'https://example.com/product/123',
     title: 'Amazing Product',
@@ -73,7 +73,7 @@ print('Short URL: ${link.shortUrl}');
 ### Handle Deep Links
 
 ```dart
-SmartLinkClient.instance.onDeepLink.listen((deepLink) {
+LinkGravityClient.instance.onDeepLink.listen((deepLink) {
   print('Deep link opened: ${deepLink.path}');
   // Navigate based on deep link
 });
@@ -82,7 +82,7 @@ SmartLinkClient.instance.onDeepLink.listen((deepLink) {
 ### Track Events
 
 ```dart
-await SmartLinkClient.instance.trackEvent('product_viewed', {
+await LinkGravityClient.instance.trackEvent('product_viewed', {
   'productId': '123',
 });
 ```
@@ -90,7 +90,7 @@ await SmartLinkClient.instance.trackEvent('product_viewed', {
 ### Track Conversions
 
 ```dart
-await SmartLinkClient.instance.trackConversion(
+await LinkGravityClient.instance.trackConversion(
   type: 'purchase',
   revenue: 29.99,
   currency: 'USD',
@@ -121,7 +121,7 @@ On iOS, the SDK uses **fingerprint matching** to probabilistically match the use
 If you need to handle deferred deep links manually:
 
 ```dart
-final deepLinkUrl = await SmartLinkClient.instance.handleDeferredDeepLink(
+final deepLinkUrl = await LinkGravityClient.instance.handleDeferredDeepLink(
   onFound: () {
     print('Deferred deep link found!');
   },
@@ -141,7 +141,7 @@ if (deepLinkUrl != null) {
 
 The SDK automatically integrates with the Play Install Referrer API. No additional setup is required.
 
-For the referrer to work, your SmartLinks must include the `deferred_link` parameter in the Play Store URL. The SmartLink backend handles this automatically when generating links.
+For the referrer to work, your LinkGravity links must include the `deferred_link` parameter in the Play Store URL. The LinkGravity backend handles this automatically when generating links.
 
 ### App Links
 
@@ -167,10 +167,10 @@ Add to your `android/app/src/main/AndroidManifest.xml`:
 ## Configuration Options
 
 ```dart
-await SmartLinkClient.initialize(
-  baseUrl: 'https://api.smartlink.io',
+await LinkGravityClient.initialize(
+  baseUrl: 'https://api.linkgravity.io',
   apiKey: 'your-api-key',
-  config: SmartLinkConfig(
+  config: LinkGravityConfig(
     logLevel: LogLevel.info,
     enableDeepLinking: true,
     enableAnalytics: true,
@@ -184,12 +184,12 @@ await SmartLinkClient.initialize(
 
 ## API Reference
 
-### SmartLinkClient
+### LinkGravityClient
 
 | Method | Description |
 |--------|-------------|
 | `initialize()` | Initialize the SDK |
-| `createLink()` | Create a new SmartLink |
+| `createLink()` | Create a new LinkGravity link |
 | `getLink()` | Get link by ID |
 | `updateLink()` | Update an existing link |
 | `deleteLink()` | Delete a link |
@@ -220,7 +220,7 @@ See documentation for FlutterFlow Custom Actions.
 
 1. Ensure Google Play Services is available on the device
 2. The app must be installed from the Play Store (not sideloaded)
-3. Check that the SmartLink includes the `deferred_link` parameter
+3. Check that the LinkGravity link includes the `deferred_link` parameter
 
 ### Deep Links Not Working
 

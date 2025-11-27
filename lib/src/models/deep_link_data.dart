@@ -8,7 +8,7 @@ class DeepLinkData {
   /// Query parameters
   final Map<String, String> params;
 
-  /// URL scheme (e.g., "https", "smartlink", "myapp")
+  /// URL scheme (e.g., "https", "linkgravity", "myapp")
   final String scheme;
 
   /// Host/domain (if applicable)

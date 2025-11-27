@@ -16,53 +16,53 @@ import 'services/deep_link_service.dart';
 import 'services/deferred_deep_link_service.dart';
 import 'services/analytics_service.dart';
 import 'services/install_referrer_service.dart';
-import 'smartlink_config.dart';
+import 'linkgravity_config.dart';
 import 'utils/logger.dart';
 
-/// Main SmartLink SDK client
+/// Main LinkGravity SDK client
 ///
-/// This is the primary class for integrating SmartLink into your Flutter app.
+/// This is the primary class for integrating LinkGravity into your Flutter app.
 ///
 /// Example usage:
 /// ```dart
 /// // Initialize SDK
-/// final smartLink = await SmartLinkClient.initialize(
-///   baseUrl: 'https://api.smartlink.io',
+/// final linkGravity = await LinkGravityClient.initialize(
+///   baseUrl: 'https://api.linkgravity.io',
 ///   apiKey: 'your-api-key',
 /// );
 ///
 /// // Create a link
-/// final link = await smartLink.createLink(
+/// final link = await linkGravity.createLink(
 ///   LinkParams(longUrl: 'https://example.com/product/123'),
 /// );
 ///
 /// // Listen for deep links
-/// smartLink.onDeepLink.listen((deepLink) {
+/// linkGravity.onDeepLink.listen((deepLink) {
 ///   print('Deep link opened: ${deepLink.path}');
 /// });
 /// ```
-class SmartLinkClient {
+class LinkGravityClient {
   /// Singleton instance
-  static SmartLinkClient? _instance;
+  static LinkGravityClient? _instance;
 
   /// Get singleton instance (must call [initialize] first)
-  static SmartLinkClient get instance {
+  static LinkGravityClient get instance {
     if (_instance == null) {
       throw StateError(
-        'SmartLink not initialized. Call SmartLinkClient.initialize() first.',
+        'LinkGravity not initialized. Call LinkGravityClient.initialize() first.',
       );
     }
     return _instance!;
   }
 
-  /// Base URL of SmartLink backend
+  /// Base URL of LinkGravity backend
   final String baseUrl;
 
   /// API Key for authentication
   final String? apiKey;
 
   /// SDK Configuration
-  final SmartLinkConfig config;
+  final LinkGravityConfig config;
 
   // Services
   late final ApiService _api;
@@ -91,13 +91,13 @@ class SmartLinkClient {
   bool _matchPrefix = true;
 
   /// Private constructor
-  SmartLinkClient._({
+  LinkGravityClient._({
     required this.baseUrl,
     this.apiKey,
     required this.config,
   }) {
     // Initialize logger
-    SmartLinkLogger.setLevel(config.logLevel);
+    LinkGravityLogger.setLevel(config.logLevel);
 
     // Initialize services
     _storage = StorageService();
@@ -120,34 +120,34 @@ class SmartLinkClient {
     );
   }
 
-  /// Initialize the SmartLink SDK
+  /// Initialize the LinkGravity SDK
   ///
   /// This must be called before using any other SDK features.
   /// Typically called in your app's main() function or app startup.
   ///
   /// Parameters:
-  /// - [baseUrl]: Base URL of your SmartLink backend (e.g., 'https://api.smartlink.io')
+  /// - [baseUrl]: Base URL of your LinkGravity backend (e.g., 'https://api.linkgravity.io')
   /// - [apiKey]: Your API key (optional for some read-only operations)
   /// - [config]: SDK configuration (optional)
   ///
-  /// Returns initialized [SmartLinkClient] instance
-  static Future<SmartLinkClient> initialize({
+  /// Returns initialized [LinkGravityClient] instance
+  static Future<LinkGravityClient> initialize({
     required String baseUrl,
     String? apiKey,
-    SmartLinkConfig? config,
+    LinkGravityConfig? config,
   }) async {
     if (_instance != null) {
-      SmartLinkLogger.warning(
-          'SmartLink already initialized, returning existing instance');
+      LinkGravityLogger.warning(
+          'LinkGravity already initialized, returning existing instance');
       return _instance!;
     }
 
-    SmartLinkLogger.info('Initializing SmartLink SDK...');
+    LinkGravityLogger.info('Initializing LinkGravity SDK...');
 
-    _instance = SmartLinkClient._(
+    _instance = LinkGravityClient._(
       baseUrl: baseUrl,
       apiKey: apiKey,
-      config: config ?? SmartLinkConfig(),
+      config: config ?? LinkGravityConfig(),
     );
 
     await _instance!._init();
@@ -159,13 +159,13 @@ class SmartLinkClient {
   Future<void> _init() async {
     if (_initialized) return;
 
-    SmartLinkLogger.info('SmartLink SDK ${config.toString()}');
+    LinkGravityLogger.info('LinkGravity SDK ${config.toString()}');
 
     try {
       // Get app version
       final packageInfo = await PackageInfo.fromPlatform();
       _appVersion = packageInfo.version;
-      SmartLinkLogger.debug('App version: $_appVersion');
+      LinkGravityLogger.debug('App version: $_appVersion');
 
       // Initialize analytics service
       await _analytics.initialize();
@@ -175,9 +175,9 @@ class SmartLinkClient {
       if (_deviceFingerprint == null) {
         _deviceFingerprint = await _fingerprint.generateFingerprint();
         await _storage.saveFingerprint(_deviceFingerprint!);
-        SmartLinkLogger.info('New device fingerprint generated');
+        LinkGravityLogger.info('New device fingerprint generated');
       } else {
-        SmartLinkLogger.debug('Existing fingerprint loaded');
+        LinkGravityLogger.debug('Existing fingerprint loaded');
       }
 
       // Set fingerprint in analytics
@@ -198,7 +198,7 @@ class SmartLinkClient {
         // Handle deferred deep links (first launch)
         await _handleDeferredDeepLink();
 
-        SmartLinkLogger.info('Deep linking enabled');
+        LinkGravityLogger.info('Deep linking enabled');
       }
 
       // Track app open event
@@ -207,10 +207,10 @@ class SmartLinkClient {
       }
 
       _initialized = true;
-      SmartLinkLogger.info('SmartLink SDK initialized successfully');
+      LinkGravityLogger.info('LinkGravity SDK initialized successfully');
     } catch (e, stackTrace) {
-      SmartLinkLogger.error(
-          'Failed to initialize SmartLink SDK', e, stackTrace);
+      LinkGravityLogger.error(
+          'Failed to initialize LinkGravity SDK', e, stackTrace);
       rethrow;
     }
   }
@@ -224,12 +224,12 @@ class SmartLinkClient {
     final isFirstLaunch = await _storage.isFirstLaunch();
 
     if (!isFirstLaunch) {
-      SmartLinkLogger.debug(
+      LinkGravityLogger.debug(
           'Not first launch, skipping deferred deep link check');
       return;
     }
 
-    SmartLinkLogger.info(
+    LinkGravityLogger.info(
         'First launch detected, checking for deferred deep link...');
 
     try {
@@ -245,9 +245,9 @@ class SmartLinkClient {
       final match = await deferredService.matchDeferredDeepLinkWithRetry();
 
       if (match != null && match.success && match.deepLinkUrl != null) {
-        SmartLinkLogger.info('✅ Deferred deep link found!');
-        SmartLinkLogger.info('   Method: ${match.matchMethod}');
-        SmartLinkLogger.info('   URL: ${match.deepLinkUrl}');
+        LinkGravityLogger.info('✅ Deferred deep link found!');
+        LinkGravityLogger.info('   Method: ${match.matchMethod}');
+        LinkGravityLogger.info('   URL: ${match.deepLinkUrl}');
 
         // Track install with attribution
         await _api.trackInstall(
@@ -283,10 +283,10 @@ class SmartLinkClient {
 
         _deepLink.linkController.add(deepLink);
       } else {
-        SmartLinkLogger.debug('No deferred deep link found');
+        LinkGravityLogger.debug('No deferred deep link found');
       }
     } catch (e, stackTrace) {
-      SmartLinkLogger.error('Error handling deferred deep link', e, stackTrace);
+      LinkGravityLogger.error('Error handling deferred deep link', e, stackTrace);
     }
 
     // Mark as launched (even if matching failed)
@@ -312,11 +312,11 @@ class SmartLinkClient {
   // LINK MANAGEMENT
   // ============================================================================
 
-  /// Create a new SmartLink
+  /// Create a new LinkGravity link
   ///
   /// Example:
   /// ```dart
-  /// final link = await smartLink.createLink(
+  /// final link = await linkGravity.createLink(
   ///   LinkParams(
   ///     longUrl: 'https://example.com/product/123',
   ///     title: 'Amazing Product',
@@ -327,10 +327,10 @@ class SmartLinkClient {
   /// );
   /// print('Short URL: ${link.shortUrl}');
   /// ```
-  Future<SmartLink> createLink(LinkParams params) async {
+  Future<LinkGravity> createLink(LinkParams params) async {
     _ensureInitialized();
 
-    SmartLinkLogger.info('Creating link: ${params.longUrl}');
+    LinkGravityLogger.info('Creating link: ${params.longUrl}');
     final link = await _api.createLink(params);
 
     // Track link created event
@@ -349,20 +349,20 @@ class SmartLinkClient {
   }
 
   /// Get a specific link by ID
-  Future<SmartLink> getLink(String linkId) async {
+  Future<LinkGravity> getLink(String linkId) async {
     _ensureInitialized();
     return await _api.getLink(linkId);
   }
 
   /// Get all links
-  Future<List<SmartLink>> getLinks(
+  Future<List<LinkGravity>> getLinks(
       {int? limit, int? offset, String? search}) async {
     _ensureInitialized();
     return await _api.getLinks(limit: limit, offset: offset, search: search);
   }
 
   /// Update an existing link
-  Future<SmartLink> updateLink(String linkId, LinkParams params) async {
+  Future<LinkGravity> updateLink(String linkId, LinkParams params) async {
     _ensureInitialized();
     return await _api.updateLink(linkId, params);
   }
@@ -383,7 +383,7 @@ class SmartLinkClient {
   ///
   /// Example:
   /// ```dart
-  /// smartLink.onDeepLink.listen((deepLink) {
+  /// linkGravity.onDeepLink.listen((deepLink) {
   ///   if (deepLink.path.startsWith('/product/')) {
   ///     final productId = deepLink.path.split('/').last;
   ///     navigateToProduct(productId);
@@ -441,12 +441,12 @@ class SmartLinkClient {
     _registeredRoutes = routes;
     _matchPrefix = matchPrefix;
 
-    SmartLinkLogger.info('Registering ${routes.length} deep link routes...');
+    LinkGravityLogger.info('Registering ${routes.length} deep link routes...');
 
     // Handle initial deep link (cold start)
     final initialLink = _deepLink.initialLink;
     if (initialLink != null) {
-      SmartLinkLogger.info('Processing initial deep link: ${initialLink.path}');
+      LinkGravityLogger.info('Processing initial deep link: ${initialLink.path}');
       _handleRouteMatch(initialLink);
       // Clear initial link after processing to prevent duplicate handling
       _deepLink.initialLink = null;
@@ -457,11 +457,11 @@ class SmartLinkClient {
     _routeStreamSubscription = _deepLink.linkStream.listen(
       _handleRouteMatch,
       onError: (error, stackTrace) {
-        SmartLinkLogger.error('Deep link stream error', error, stackTrace);
+        LinkGravityLogger.error('Deep link stream error', error, stackTrace);
       },
     );
 
-    SmartLinkLogger.info('✅ Deep link routes registered successfully');
+    LinkGravityLogger.info('✅ Deep link routes registered successfully');
   }
 
   /// Handle route matching for incoming deep links
@@ -469,12 +469,12 @@ class SmartLinkClient {
   /// This is called automatically by [registerRoutes] when a deep link is received.
   void _handleRouteMatch(DeepLinkData deepLink) {
     if (_routeContext == null || _registeredRoutes == null) {
-      SmartLinkLogger.warning(
+      LinkGravityLogger.warning(
           'Route context not available, cannot handle deep link');
       return;
     }
 
-    SmartLinkLogger.debug('Attempting to match route for: ${deepLink.path}');
+    LinkGravityLogger.debug('Attempting to match route for: ${deepLink.path}');
 
     for (final entry in _registeredRoutes!.entries) {
       final routePattern = entry.key;
@@ -485,14 +485,14 @@ class SmartLinkClient {
           : deepLink.path == routePattern;
 
       if (matches) {
-        SmartLinkLogger.info(
+        LinkGravityLogger.info(
             '✅ Matched route: $routePattern -> ${deepLink.path}');
 
         try {
           final action = actionBuilder(deepLink);
           action.execute(_routeContext!);
         } catch (e, stackTrace) {
-          SmartLinkLogger.error(
+          LinkGravityLogger.error(
               'Error executing route action for $routePattern', e, stackTrace);
         }
 
@@ -500,7 +500,7 @@ class SmartLinkClient {
       }
     }
 
-    SmartLinkLogger.warning('⚠️ No route matched for: ${deepLink.path}');
+    LinkGravityLogger.warning('⚠️ No route matched for: ${deepLink.path}');
   }
 
   // ============================================================================
@@ -511,7 +511,7 @@ class SmartLinkClient {
   ///
   /// Example:
   /// ```dart
-  /// await smartLink.trackEvent('purchase', {
+  /// await linkGravity.trackEvent('purchase', {
   ///   'productId': '123',
   ///   'amount': 29.99,
   ///   'currency': 'USD',
@@ -522,7 +522,7 @@ class SmartLinkClient {
     _ensureInitialized();
 
     if (!config.enableAnalytics) {
-      SmartLinkLogger.debug('Analytics disabled');
+      LinkGravityLogger.debug('Analytics disabled');
       return;
     }
 
@@ -541,7 +541,7 @@ class SmartLinkClient {
   ///
   /// Example:
   /// ```dart
-  /// await smartLink.trackConversion(
+  /// await linkGravity.trackConversion(
   ///   type: 'purchase',
   ///   revenue: 29.99,
   ///   currency: 'USD',
@@ -573,7 +573,7 @@ class SmartLinkClient {
     );
 
     if (success) {
-      SmartLinkLogger.info(
+      LinkGravityLogger.info(
           'Conversion tracked: $type${revenue != null ? ' ($revenue $currency)' : ''}');
     }
 
@@ -599,7 +599,7 @@ class SmartLinkClient {
     // Check cache first
     var attribution = await _storage.getAttribution();
     if (attribution != null) {
-      SmartLinkLogger.debug('Returning cached attribution');
+      LinkGravityLogger.debug('Returning cached attribution');
       return attribution;
     }
 
@@ -622,14 +622,14 @@ class SmartLinkClient {
   Future<void> setUserId(String userId) async {
     _ensureInitialized();
     await _analytics.setUserId(userId);
-    SmartLinkLogger.info('User ID set: $userId');
+    LinkGravityLogger.info('User ID set: $userId');
   }
 
   /// Clear user ID (e.g., on logout)
   Future<void> clearUserId() async {
     _ensureInitialized();
     await _analytics.setUserId(null);
-    SmartLinkLogger.info('User ID cleared');
+    LinkGravityLogger.info('User ID cleared');
   }
 
   // ============================================================================
@@ -758,7 +758,7 @@ class SmartLinkClient {
   void _ensureInitialized() {
     if (!_initialized) {
       throw StateError(
-        'SmartLink not initialized. Call SmartLinkClient.initialize() first.',
+        'LinkGravity not initialized. Call LinkGravityClient.initialize() first.',
       );
     }
   }
@@ -780,13 +780,13 @@ class SmartLinkClient {
     VoidCallback? onNotFound,
   }) async {
     if (!_initialized) {
-      SmartLinkLogger.error('SmartLink not initialized');
+      LinkGravityLogger.error('LinkGravity not initialized');
       onNotFound?.call();
       return null;
     }
 
     try {
-      SmartLinkLogger.info('Handling deferred deep link...');
+      LinkGravityLogger.info('Handling deferred deep link...');
 
       final deferredService = DeferredDeepLinkService(
         apiService: _api,
@@ -798,9 +798,9 @@ class SmartLinkClient {
       final match = await deferredService.matchDeferredDeepLink();
 
       if (match != null && match.success && match.deepLinkUrl != null) {
-        SmartLinkLogger.info(
+        LinkGravityLogger.info(
             '✅ Deferred deep link found: ${match.deepLinkUrl}');
-        SmartLinkLogger.info('   Method: ${match.matchMethod}');
+        LinkGravityLogger.info('   Method: ${match.matchMethod}');
 
         // Check confidence for fingerprint matches
         if (match.isAcceptableConfidence()) {
@@ -820,18 +820,18 @@ class SmartLinkClient {
 
           return match.deepLinkUrl;
         } else {
-          SmartLinkLogger.warning(
+          LinkGravityLogger.warning(
               '⚠️ Deep link confidence too low: ${match.confidence}');
           onNotFound?.call();
           return null;
         }
       } else {
-        SmartLinkLogger.info('ℹ️ No deferred deep link found');
+        LinkGravityLogger.info('ℹ️ No deferred deep link found');
         onNotFound?.call();
         return null;
       }
     } catch (e) {
-      SmartLinkLogger.error('Error handling deferred deep link: $e', e);
+      LinkGravityLogger.error('Error handling deferred deep link: $e', e);
       onNotFound?.call();
       return null;
     }
@@ -854,7 +854,7 @@ class SmartLinkClient {
     double? matchScore,
   }) async {
     if (!_initialized) {
-      SmartLinkLogger.error('SmartLink not initialized');
+      LinkGravityLogger.error('LinkGravity not initialized');
       return false;
     }
 
@@ -875,19 +875,19 @@ class SmartLinkClient {
   /// WARNING: This will clear all cached data including attribution.
   /// Use with caution!
   Future<void> reset() async {
-    SmartLinkLogger.warning('Resetting SmartLink SDK...');
+    LinkGravityLogger.warning('Resetting LinkGravity SDK...');
 
     await _storage.clearAll();
     await _analytics.clearFailedEvents();
 
-    SmartLinkLogger.info('SmartLink SDK reset complete');
+    LinkGravityLogger.info('LinkGravity SDK reset complete');
   }
 
   /// Dispose SDK resources
   ///
   /// Call this when your app is shutting down.
   Future<void> dispose() async {
-    SmartLinkLogger.info('Disposing SmartLink SDK...');
+    LinkGravityLogger.info('Disposing LinkGravity SDK...');
 
     await _analytics.dispose();
     _deepLink.dispose();
@@ -901,6 +901,6 @@ class SmartLinkClient {
     _initialized = false;
     _instance = null;
 
-    SmartLinkLogger.info('SmartLink SDK disposed');
+    LinkGravityLogger.info('LinkGravity SDK disposed');
   }
 }

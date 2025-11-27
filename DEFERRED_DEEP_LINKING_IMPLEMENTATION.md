@@ -6,7 +6,7 @@
 
 ## Summary
 
-Added privacy-aware deferred deep linking support to the SmartLink Flutter SDK. This implementation enables iOS and Android apps to open to specific screens after installation, matching the user's pre-install web click through probabilistic device fingerprinting.
+Added privacy-aware deferred deep linking support to the LinkGravity Flutter SDK. This implementation enables iOS and Android apps to open to specific screens after installation, matching the user's pre-install web click through probabilistic device fingerprinting.
 
 ## New Files Created
 
@@ -49,13 +49,13 @@ Added privacy-aware deferred deep linking support to the SmartLink Flutter SDK. 
   - Added `trackConversion()` - Track conversion events
 
 ### Main Client
-- **`lib/src/smartlink_client.dart`**
+- **`lib/src/linkgravity_client.dart`**
   - Added `handleDeferredDeepLink()` - Main entry point for deferred linking
   - Added `trackInstall()` - Public method to track installation
   - Added `trackConversion()` - Public method to track conversions
 
 ### Exports
-- **`lib/smartlink_flutter_sdk.dart`**
+- **`lib/linkgravity_flutter_sdk.dart`**
   - Exported `deep_link_match.dart` models
 
 ## Architecture
@@ -214,7 +214,7 @@ Open deep link or home screen
 ### Basic Implementation
 
 ```dart
-import 'package:smartlink_flutter_sdk/smartlink_flutter_sdk.dart';
+import 'package:linkgravity_flutter_sdk/linkgravity_flutter_sdk.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -231,7 +231,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _handleDeepLink() async {
-    final deepLink = await SmartLinkClient.instance.handleDeferredDeepLink(
+    final deepLink = await LinkGravityClient.instance.handleDeferredDeepLink(
       onFound: () => print('Opening deep link'),
       onNotFound: () => print('Showing home screen'),
     );
@@ -240,7 +240,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SmartLink',
+      title: 'LinkGravity',
       home: const HomeScreen(),
     );
   }
@@ -251,10 +251,10 @@ class _MyAppState extends State<MyApp> {
 
 ```dart
 // Track installation
-await SmartLinkClient.instance.trackInstall();
+await LinkGravityClient.instance.trackInstall();
 
 // Track conversion
-await SmartLinkClient.instance.trackConversion(
+await LinkGravityClient.instance.trackConversion(
   linkId: 'link-123',
   conversionType: 'purchase',
   revenue: 29.99,
@@ -268,7 +268,7 @@ All operations handle errors gracefully:
 
 ```dart
 try {
-  final deepLink = await SmartLinkClient.instance.handleDeferredDeepLink(
+  final deepLink = await LinkGravityClient.instance.handleDeferredDeepLink(
     onFound: () => print('Found'),
     onNotFound: () => print('Not found'),
   );
@@ -351,9 +351,9 @@ Flutter SDK Updates:
 ├── Modified Services (1 file)
 │   └── lib/src/services/api_service.dart (+60 lines)
 ├── Modified Client (1 file)
-│   └── lib/src/smartlink_client.dart (+100 lines)
+│   └── lib/src/linkgravity_client.dart (+100 lines)
 ├── Modified Exports (1 file)
-│   └── lib/smartlink_flutter_sdk.dart (+1 line)
+│   └── lib/linkgravity_flutter_sdk.dart (+1 line)
 └── Documentation (2 files)
     ├── PRIVACY_DEFERRED_DEEP_LINKING_GUIDE.md
     └── DEFERRED_DEEP_LINKING_IMPLEMENTATION.md

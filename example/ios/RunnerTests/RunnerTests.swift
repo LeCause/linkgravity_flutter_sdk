@@ -3,7 +3,7 @@ import UIKit
 import XCTest
 
 
-@testable import smartlink_flutter_sdk
+@testable import linkgravity_flutter_sdk
 
 // This demonstrates a simple unit test of the Swift portion of this plugin's implementation.
 //
@@ -12,7 +12,7 @@ import XCTest
 class RunnerTests: XCTestCase {
 
   func testGetPlatformVersion() {
-    let plugin = SmartlinkFlutterSdkPlugin()
+    let plugin = LinkgravityFlutterSdkPlugin()
 
     let call = FlutterMethodCall(methodName: "getPlatformVersion", arguments: [])
 

@@ -13,7 +13,7 @@ import 'storage_service.dart';
 /// for deterministic matching.
 ///
 /// The Play Install Referrer API provides 100% accurate attribution for
-/// Android installs that originate from SmartLinks.
+/// Android installs that originate from LinkGravity links.
 ///
 /// Usage:
 /// ```dart
@@ -24,8 +24,8 @@ import 'storage_service.dart';
 /// }
 /// ```
 class InstallReferrerService {
-  static const _channel = MethodChannel('smartlink_flutter_sdk');
-  static const String _keyInstallUTM = 'smartlink_install_utm';
+  static const _channel = MethodChannel('linkgravity_flutter_sdk');
+  static const String _keyInstallUTM = 'linkgravity_install_utm';
 
   static bool _checked = false;
   static String? _referrerToken;
@@ -69,23 +69,23 @@ class InstallReferrerService {
   /// - App was not installed from Play Store
   Future<String?> getInstallReferrer() async {
     if (!isAndroid) {
-      SmartLinkLogger.debug('Not Android, skipping Install Referrer');
+      LinkGravityLogger.debug('Not Android, skipping Install Referrer');
       return null;
     }
 
     if (_checked && _referrerToken != null) {
-      SmartLinkLogger.debug('Returning cached referrer token');
+      LinkGravityLogger.debug('Returning cached referrer token');
       return _referrerToken;
     }
 
     try {
-      SmartLinkLogger.info('Retrieving Play Install Referrer (native)...');
+      LinkGravityLogger.info('Retrieving Play Install Referrer (native)...');
 
       final result = await _channel
           .invokeMethod<Map<dynamic, dynamic>>('getInstallReferrer');
 
       if (result == null) {
-        SmartLinkLogger.debug('No result from native install referrer');
+        LinkGravityLogger.debug('No result from native install referrer');
         _checked = true;
         return null;
       }
@@ -94,7 +94,7 @@ class InstallReferrerService {
       if (result['error'] == true) {
         final errorCode = result['errorCode'] as int?;
         final message = result['message'] as String?;
-        SmartLinkLogger.warning(
+        LinkGravityLogger.warning(
             'Install referrer error: $message (code: $errorCode)');
         _checked = true;
         return null;
@@ -106,29 +106,29 @@ class InstallReferrerService {
       _installTimestamp = (result['installTimestamp'] as num?)?.toInt();
       _clickTimestamp = (result['clickTimestamp'] as num?)?.toInt();
 
-      SmartLinkLogger.debug('Raw referrer URL: $referrerUrl');
+      LinkGravityLogger.debug('Raw referrer URL: $referrerUrl');
       if (_installTimestamp != null && _installTimestamp! > 0) {
-        SmartLinkLogger.debug('Install timestamp: $_installTimestamp');
+        LinkGravityLogger.debug('Install timestamp: $_installTimestamp');
       }
       if (_clickTimestamp != null && _clickTimestamp! > 0) {
-        SmartLinkLogger.debug('Click timestamp: $_clickTimestamp');
+        LinkGravityLogger.debug('Click timestamp: $_clickTimestamp');
       }
 
       if (referrerUrl == null || referrerUrl.isEmpty) {
-        SmartLinkLogger.debug('Empty referrer URL');
+        LinkGravityLogger.debug('Empty referrer URL');
         _checked = true;
         return null;
       }
 
       // Parse referrer URL to extract deferred_link token
-      // Format: utm_source=smartlink&utm_campaign=ABC123&deferred_link=<token>
+      // Format: utm_source=linkgravity&utm_campaign=ABC123&deferred_link=<token>
       _referrerToken = _extractDeferredLinkToken(referrerUrl);
 
       if (_referrerToken != null) {
-        SmartLinkLogger.info(
+        LinkGravityLogger.info(
             'Found deferred_link token: ${_referrerToken!.substring(0, _referrerToken!.length > 20 ? 20 : _referrerToken!.length)}...');
       } else {
-        SmartLinkLogger.debug('No deferred_link parameter in referrer');
+        LinkGravityLogger.debug('No deferred_link parameter in referrer');
       }
 
       _checked = true;
@@ -138,11 +138,11 @@ class InstallReferrerService {
 
       return _referrerToken;
     } on PlatformException catch (e) {
-      SmartLinkLogger.error('Platform error retrieving install referrer', e);
+      LinkGravityLogger.error('Platform error retrieving install referrer', e);
       _checked = true;
       return null;
     } catch (e, stackTrace) {
-      SmartLinkLogger.error('Error retrieving install referrer', e, stackTrace);
+      LinkGravityLogger.error('Error retrieving install referrer', e, stackTrace);
       _checked = true;
       return null;
     }
@@ -151,7 +151,7 @@ class InstallReferrerService {
   /// Extract the deferred_link token from the referrer URL
   ///
   /// The referrer URL format is typically:
-  /// `utm_source=smartlink&utm_campaign=ABC123&deferred_link=<token>`
+  /// `utm_source=linkgravity&utm_campaign=ABC123&deferred_link=<token>`
   String? _extractDeferredLinkToken(String referrerUrl) {
     try {
       // The referrer URL is URL-encoded query parameters
@@ -159,7 +159,7 @@ class InstallReferrerService {
       final uri = Uri.parse('http://dummy?$referrerUrl');
       return uri.queryParameters['deferred_link'];
     } catch (e) {
-      SmartLinkLogger.warning(
+      LinkGravityLogger.warning(
           'Error parsing referrer URL: $e, trying alternate method');
 
       // Fallback: Try to extract using string manipulation
@@ -172,10 +172,10 @@ class InstallReferrerService {
     }
   }
 
-  /// Check if we have UTM parameters from SmartLink
-  bool hasSmartLinkUtm() {
+  /// Check if we have UTM parameters from LinkGravity
+  bool hasLinkGravityUtm() {
     if (_rawReferrer == null) return false;
-    return _rawReferrer!.contains('utm_source=smartlink');
+    return _rawReferrer!.contains('utm_source=linkgravity');
   }
 
   /// Get UTM source from referrer
@@ -223,7 +223,7 @@ class InstallReferrerService {
       _cachedUTM = utm;
       return utm ?? const UTMParams.empty();
     } catch (e) {
-      SmartLinkLogger.error('Failed to extract UTM from referrer', e);
+      LinkGravityLogger.error('Failed to extract UTM from referrer', e);
       return const UTMParams.empty();
     }
   }
@@ -237,9 +237,9 @@ class InstallReferrerService {
     if (utm.isNotEmpty) {
       try {
         await _storage.saveData(_keyInstallUTM, utm.toJson());
-        SmartLinkLogger.debug('UTM parameters cached: $utm');
+        LinkGravityLogger.debug('UTM parameters cached: $utm');
       } catch (e) {
-        SmartLinkLogger.error('Failed to cache UTM parameters', e);
+        LinkGravityLogger.error('Failed to cache UTM parameters', e);
       }
     }
   }
@@ -267,7 +267,7 @@ class InstallReferrerService {
       }
       return null;
     } catch (e) {
-      SmartLinkLogger.error('Failed to retrieve cached install UTM', e);
+      LinkGravityLogger.error('Failed to retrieve cached install UTM', e);
       return null;
     }
   }

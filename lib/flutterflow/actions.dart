@@ -1,4 +1,4 @@
-/// FlutterFlow Custom Actions for SmartLink SDK
+/// FlutterFlow Custom Actions for LinkGravity SDK
 ///
 /// These functions are optimized for use in FlutterFlow's Custom Action system.
 /// They provide simple, stateless functions that can be called from FlutterFlow UI.
@@ -7,35 +7,35 @@
 ///
 /// 1. Add this package to your FlutterFlow project dependencies
 /// 2. Import these custom actions
-/// 3. Call `initSmartLink()` in your App State > On App Start
+/// 3. Call `initLinkGravity()` in your App State > On App Start
 /// 4. Use other actions throughout your app
-library smartlink_flutterflow;
+library linkgravity_flutterflow;
 
 import 'dart:convert';
-import '../smartlink_flutter_sdk.dart';
+import '../linkgravity_flutter_sdk.dart';
 
-/// Initialize SmartLink SDK
+/// Initialize LinkGravity SDK
 ///
 /// Use in: App State > On App Start
 ///
 /// Parameters:
-/// - [baseUrl]: Your SmartLink backend URL (e.g., "https://localhost:3000")
-/// - [apiKey]: Your SmartLink API key (optional)
+/// - [baseUrl]: Your LinkGravity backend URL (e.g., "https://localhost:3000")
+/// - [apiKey]: Your LinkGravity API key (optional)
 /// - [enableAnalytics]: Enable analytics tracking (default: true)
 /// - [enableDeepLinking]: Enable deep linking (default: true)
 ///
 /// Returns: `true` if successful, `false` otherwise
-Future<bool> initSmartLink({
+Future<bool> initLinkGravity({
   required String baseUrl,
   String? apiKey,
   bool enableAnalytics = true,
   bool enableDeepLinking = true,
 }) async {
   try {
-    await SmartLinkClient.initialize(
+    await LinkGravityClient.initialize(
       baseUrl: baseUrl,
       apiKey: apiKey,
-      config: SmartLinkConfig(
+      config: LinkGravityConfig(
         enableAnalytics: enableAnalytics,
         enableDeepLinking: enableDeepLinking,
         logLevel: LogLevel.info,
@@ -43,12 +43,12 @@ Future<bool> initSmartLink({
     );
     return true;
   } catch (e) {
-    print('Failed to initialize SmartLink: $e');
+    print('Failed to initialize LinkGravity: $e');
     return false;
   }
 }
 
-/// Create a SmartLink
+/// Create a LinkGravity
 ///
 /// Parameters:
 /// - [longUrl]: The original URL to shorten (required)
@@ -59,7 +59,7 @@ Future<bool> initSmartLink({
 /// - [androidPlayStoreUrl]: Optional Android Play Store URL
 ///
 /// Returns: Short URL as String, or null if failed
-Future<String?> createSmartLink({
+Future<String?> createLinkGravity({
   required String longUrl,
   String? title,
   String? shortCode,
@@ -68,7 +68,7 @@ Future<String?> createSmartLink({
   String? androidPlayStoreUrl,
 }) async {
   try {
-    final link = await SmartLinkClient.instance.createLink(
+    final link = await LinkGravityClient.instance.createLink(
       LinkParams(
         longUrl: longUrl,
         title: title,
@@ -82,7 +82,7 @@ Future<String?> createSmartLink({
     );
     return link.shortUrl;
   } catch (e) {
-    print('Failed to create SmartLink: $e');
+    print('Failed to create LinkGravity: $e');
     return null;
   }
 }
@@ -96,8 +96,8 @@ Future<String?> createSmartLink({
 /// - [propertyKey2]: Optional second property key
 /// - [propertyValue2]: Optional second property value
 ///
-/// For more complex properties, use [trackSmartLinkEventWithJSON]
-Future<void> trackSmartLinkEvent({
+/// For more complex properties, use [trackLinkGravityEventWithJSON]
+Future<void> trackLinkGravityEvent({
   required String eventName,
   String? propertyKey1,
   String? propertyValue1,
@@ -115,7 +115,7 @@ Future<void> trackSmartLinkEvent({
       properties[propertyKey2] = propertyValue2;
     }
 
-    await SmartLinkClient.instance.trackEvent(
+    await LinkGravityClient.instance.trackEvent(
       eventName,
       properties.isNotEmpty ? properties : null,
     );
@@ -138,14 +138,14 @@ Future<void> trackSmartLinkEvent({
 ///   "category": "electronics"
 /// }
 /// ```
-Future<void> trackSmartLinkEventWithJSON({
+Future<void> trackLinkGravityEventWithJSON({
   required String eventName,
   required String propertiesJson,
 }) async {
   try {
     final properties = jsonDecode(propertiesJson) as Map<String, dynamic>;
 
-    await SmartLinkClient.instance.trackEvent(eventName, properties);
+    await LinkGravityClient.instance.trackEvent(eventName, properties);
   } catch (e) {
     print('Failed to track event: $e');
   }
@@ -160,14 +160,14 @@ Future<void> trackSmartLinkEventWithJSON({
 /// - [linkId]: Optional link ID to attribute to
 ///
 /// Returns: `true` if successful, `false` otherwise
-Future<bool> trackSmartLinkConversion({
+Future<bool> trackLinkGravityConversion({
   required String type,
   required double revenue,
   String currency = 'USD',
   String? linkId,
 }) async {
   try {
-    await SmartLinkClient.instance.trackConversion(
+    await LinkGravityClient.instance.trackConversion(
       type: type,
       revenue: revenue,
       currency: currency,
@@ -194,9 +194,9 @@ Future<bool> trackSmartLinkConversion({
 ///   "isDeferred": true
 /// }
 /// ```
-Future<String?> getSmartLinkAttribution() async {
+Future<String?> getLinkGravityAttribution() async {
   try {
-    final attribution = await SmartLinkClient.instance.getAttribution();
+    final attribution = await LinkGravityClient.instance.getAttribution();
 
     if (attribution != null) {
       return jsonEncode(attribution.toJson());
@@ -215,18 +215,18 @@ Future<String?> getSmartLinkAttribution() async {
 ///
 /// Parameters:
 /// - [userId]: User ID to set
-Future<void> setSmartLinkUserId({required String userId}) async {
+Future<void> setLinkGravityUserId({required String userId}) async {
   try {
-    await SmartLinkClient.instance.setUserId(userId);
+    await LinkGravityClient.instance.setUserId(userId);
   } catch (e) {
     print('Failed to set user ID: $e');
   }
 }
 
 /// Clear user ID (e.g., on logout)
-Future<void> clearSmartLinkUserId() async {
+Future<void> clearLinkGravityUserId() async {
   try {
-    await SmartLinkClient.instance.clearUserId();
+    await LinkGravityClient.instance.clearUserId();
   } catch (e) {
     print('Failed to clear user ID: $e');
   }
@@ -235,9 +235,9 @@ Future<void> clearSmartLinkUserId() async {
 /// Get device fingerprint
 ///
 /// Returns: Device fingerprint string, or null if SDK not initialized
-Future<String?> getSmartLinkFingerprint() async {
+Future<String?> getLinkGravityFingerprint() async {
   try {
-    return SmartLinkClient.instance.fingerprint;
+    return LinkGravityClient.instance.fingerprint;
   } catch (e) {
     print('Failed to get fingerprint: $e');
     return null;
@@ -247,9 +247,9 @@ Future<String?> getSmartLinkFingerprint() async {
 /// Get session ID
 ///
 /// Returns: Current session ID, or null if SDK not initialized
-Future<String?> getSmartLinkSessionId() async {
+Future<String?> getLinkGravitySessionId() async {
   try {
-    return SmartLinkClient.instance.sessionId;
+    return LinkGravityClient.instance.sessionId;
   } catch (e) {
     print('Failed to get session ID: $e');
     return null;
@@ -261,9 +261,9 @@ Future<String?> getSmartLinkSessionId() async {
 /// Useful before app goes to background or user logs out.
 ///
 /// Returns: `true` if successful, `false` otherwise
-Future<bool> flushSmartLinkEvents() async {
+Future<bool> flushLinkGravityEvents() async {
   try {
-    await SmartLinkClient.instance.flushEvents();
+    await LinkGravityClient.instance.flushEvents();
     return true;
   } catch (e) {
     print('Failed to flush events: $e');
@@ -288,7 +288,7 @@ Future<bool> flushSmartLinkEvents() async {
 /// ```
 Future<String?> getInitialDeepLink() async {
   try {
-    final deepLink = SmartLinkClient.instance.initialDeepLink;
+    final deepLink = LinkGravityClient.instance.initialDeepLink;
 
     if (deepLink != null) {
       return jsonEncode(deepLink.toJson());
@@ -304,25 +304,25 @@ Future<String?> getInitialDeepLink() async {
 /// Check if SDK is initialized
 ///
 /// Returns: `true` if initialized, `false` otherwise
-Future<bool> isSmartLinkInitialized() async {
+Future<bool> isLinkGravityInitialized() async {
   try {
-    return SmartLinkClient.instance.isInitialized;
+    return LinkGravityClient.instance.isInitialized;
   } catch (e) {
     return false;
   }
 }
 
-/// Reset SmartLink SDK (clear all data)
+/// Reset LinkGravity SDK (clear all data)
 ///
 /// WARNING: This will clear all cached data including attribution!
 ///
 /// Returns: `true` if successful, `false` otherwise
-Future<bool> resetSmartLink() async {
+Future<bool> resetLinkGravity() async {
   try {
-    await SmartLinkClient.instance.reset();
+    await LinkGravityClient.instance.reset();
     return true;
   } catch (e) {
-    print('Failed to reset SmartLink: $e');
+    print('Failed to reset LinkGravity: $e');
     return false;
   }
 }

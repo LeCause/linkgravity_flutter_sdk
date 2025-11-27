@@ -1,17 +1,17 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:smartlink_flutter_sdk/smartlink_flutter_sdk.dart';
+import 'package:linkgravity_flutter_sdk/linkgravity_flutter_sdk.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize SmartLink SDK
+  // Initialize LinkGravity SDK
   // The SDK automatically handles deferred deep linking on first launch
-  await SmartLinkClient.initialize(
+  await LinkGravityClient.initialize(
     baseUrl: 'http://localhost:3000',
     apiKey: 'demo-api-key',
-    config: SmartLinkConfig(
+    config: LinkGravityConfig(
       enableAnalytics: true,
       enableDeepLinking: true,
       logLevel: LogLevel.debug,
@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SmartLink SDK Demo',
+      title: 'LinkGravity SDK Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
@@ -61,7 +61,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _setupDeepLinkListener() {
     // Listen for deep links
-    SmartLinkClient.instance.onDeepLink.listen((deepLink) {
+    LinkGravityClient.instance.onDeepLink.listen((deepLink) {
       setState(() {
         _deepLinks.add('${deepLink.scheme}://${deepLink.host}${deepLink.path}');
       });
@@ -76,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _loadAttribution() async {
-    final attribution = await SmartLinkClient.instance.getAttribution();
+    final attribution = await LinkGravityClient.instance.getAttribution();
     if (attribution != null) {
       setState(() {
         _attribution =
@@ -91,7 +91,7 @@ class _MyHomePageState extends State<MyHomePage> {
   /// Note: The SDK automatically handles this on first launch, but you can
   /// also check manually using handleDeferredDeepLink()
   Future<void> _checkDeferredDeepLink() async {
-    final deepLinkUrl = await SmartLinkClient.instance.handleDeferredDeepLink(
+    final deepLinkUrl = await LinkGravityClient.instance.handleDeferredDeepLink(
       onFound: () {
         debugPrint('Deferred deep link found!');
       },
@@ -109,7 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _createLink() async {
     try {
-      final link = await SmartLinkClient.instance.createLink(
+      final link = await LinkGravityClient.instance.createLink(
         LinkParams(
           longUrl: 'https://example.com/product/123',
           title: 'Demo Product',
@@ -139,7 +139,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _trackEvent() async {
-    await SmartLinkClient.instance.trackEvent('button_clicked', {
+    await LinkGravityClient.instance.trackEvent('button_clicked', {
       'button_id': 'demo_button',
       'timestamp': DateTime.now().toIso8601String(),
     });
@@ -152,7 +152,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _trackConversion() async {
-    final success = await SmartLinkClient.instance.trackConversion(
+    final success = await LinkGravityClient.instance.trackConversion(
       type: 'purchase',
       revenue: 29.99,
       currency: 'USD',
@@ -175,7 +175,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('SmartLink SDK Demo'),
+        title: const Text('LinkGravity SDK Demo'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -198,12 +198,12 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Fingerprint: ${SmartLinkClient.instance.fingerprint?.substring(0, 16)}...',
+                      'Fingerprint: ${LinkGravityClient.instance.fingerprint?.substring(0, 16)}...',
                     ),
                     Text(
-                      'Session ID: ${SmartLinkClient.instance.sessionId?.substring(0, 16)}...',
+                      'Session ID: ${LinkGravityClient.instance.sessionId?.substring(0, 16)}...',
                     ),
-                    Text('App Version: ${SmartLinkClient.instance.appVersion}'),
+                    Text('App Version: ${LinkGravityClient.instance.appVersion}'),
                     Text(
                       'Platform: ${Platform.isAndroid
                           ? "Android"

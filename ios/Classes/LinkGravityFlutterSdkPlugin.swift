@@ -1,10 +1,10 @@
 import Flutter
 import UIKit
 
-public class SmartlinkFlutterSdkPlugin: NSObject, FlutterPlugin {
+public class LinkGravityFlutterSdkPlugin: NSObject, FlutterPlugin {
   public static func register(with registrar: FlutterPluginRegistrar) {
-    let channel = FlutterMethodChannel(name: "smartlink_flutter_sdk", binaryMessenger: registrar.messenger())
-    let instance = SmartlinkFlutterSdkPlugin()
+    let channel = FlutterMethodChannel(name: "linkgravity_flutter_sdk", binaryMessenger: registrar.messenger())
+    let instance = LinkGravityFlutterSdkPlugin()
     registrar.addMethodCallDelegate(instance, channel: channel)
   }
 

@@ -1,4 +1,4 @@
-package com.smartlink.smartlink_flutter_sdk
+package com.linkgravity.linkgravity_flutter_sdk
 
 import android.content.Context
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -8,19 +8,19 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 
 /**
- * SmartlinkFlutterSdkPlugin
+ * LinkGravityFlutterSdkPlugin
  *
- * Flutter plugin for SmartLink SDK providing native Android functionality
+ * Flutter plugin for LinkGravity SDK providing native Android functionality
  * including Play Install Referrer API access for deterministic deferred deep linking.
  */
-class SmartlinkFlutterSdkPlugin : FlutterPlugin, MethodCallHandler {
+class LinkGravityFlutterSdkPlugin : FlutterPlugin, MethodCallHandler {
     /// The MethodChannel that will handle communication between Flutter and native Android
     private lateinit var channel: MethodChannel
     private lateinit var context: Context
     private var installReferrerHandler: InstallReferrerHandler? = null
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        channel = MethodChannel(flutterPluginBinding.binaryMessenger, "smartlink_flutter_sdk")
+        channel = MethodChannel(flutterPluginBinding.binaryMessenger, "linkgravity_flutter_sdk")
         channel.setMethodCallHandler(this)
         context = flutterPluginBinding.applicationContext
     }

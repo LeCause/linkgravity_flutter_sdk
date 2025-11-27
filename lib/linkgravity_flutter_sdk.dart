@@ -1,32 +1,32 @@
-/// SmartLink Flutter SDK
+/// LinkGravity Flutter SDK
 ///
 /// A comprehensive SDK for deferred deep linking, link generation,
 /// and app-to-app attribution. Compatible with FlutterFlow.
 ///
 /// ## Features
 ///
-/// - 🔗 Link Generation (create SmartLinks programmatically)
-/// - 📱 Deep Link Handling (Universal Links & App Links)
-/// - ⏰ Deferred Deep Linking (install attribution + deep link)
-/// - 📊 Click Tracking & Analytics
-/// - 🎯 App-to-App Attribution
-/// - 📴 Offline Queue (track events offline, sync later)
-/// - 📈 Custom Event Tracking
-/// - ✨ FlutterFlow Compatible
+/// - Link Generation (create LinkGravity links programmatically)
+/// - Deep Link Handling (Universal Links & App Links)
+/// - Deferred Deep Linking (install attribution + deep link)
+/// - Click Tracking & Analytics
+/// - App-to-App Attribution
+/// - Offline Queue (track events offline, sync later)
+/// - Custom Event Tracking
+/// - FlutterFlow Compatible
 ///
 /// ## Quick Start
 ///
 /// ```dart
-/// import 'package:smartlink_flutter_sdk/smartlink_flutter_sdk.dart';
+/// import 'package:linkgravity_flutter_sdk/linkgravity_flutter_sdk.dart';
 ///
 /// // Initialize SDK
-/// final smartLink = await SmartLinkClient.initialize(
-///   baseUrl: 'https://api.smartlink.io',
+/// final linkGravity = await LinkGravityClient.initialize(
+///   baseUrl: 'https://api.linkgravity.io',
 ///   apiKey: 'your-api-key',
 /// );
 ///
 /// // Create a link
-/// final link = await smartLink.createLink(
+/// final link = await linkGravity.createLink(
 ///   LinkParams(
 ///     longUrl: 'https://example.com/product/123',
 ///     deepLinkConfig: DeepLinkConfig(
@@ -36,15 +36,15 @@
 /// );
 ///
 /// // Listen for deep links
-/// smartLink.onDeepLink.listen((deepLink) {
+/// linkGravity.onDeepLink.listen((deepLink) {
 ///   print('Deep link: ${deepLink.path}');
 /// });
 /// ```
-library smartlink_flutter_sdk;
+library linkgravity_flutter_sdk;
 
 // Main client
-export 'src/smartlink_client.dart';
-export 'src/smartlink_config.dart';
+export 'src/linkgravity_client.dart';
+export 'src/linkgravity_config.dart';
 
 // Models
 export 'src/models/link.dart';
