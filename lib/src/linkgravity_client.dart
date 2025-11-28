@@ -401,6 +401,10 @@ class LinkGravityClient {
   /// It automatically handles both cold start (initial link) and warm start
   /// (incoming links while app is running) scenarios.
   ///
+  /// Supports two modes:
+  /// 1. **Simple String Mode**: Just pass route name, SDK auto-navigates
+  /// 2. **Custom RouteAction Mode**: Full control with custom logic
+  ///
   /// The method:
   /// 1. Stores the context and route map for future use
   /// 2. Immediately checks for initial deep link (cold start)
@@ -409,40 +413,68 @@ class LinkGravityClient {
   ///
   /// Parameters:
   /// - [context]: BuildContext for navigation (typically from first page)
-  /// - [routes]: Map of route patterns to RouteAction builders
+  /// - [routes]: Map of route patterns to either:
+  ///   - `String`: Route name for automatic navigation (e.g., 'ProductPage')
+  ///   - `RouteAction Function(DeepLinkData)`: Custom navigation logic
   /// - [matchPrefix]: If true, matches prefixes (e.g., "/product" matches "/product/123")
   ///                  If false, requires exact match (default: true)
   ///
-  /// Example:
+  /// Example - Simple mode:
+  /// ```dart
+  /// LinkGravityClient.instance.registerRoutes(
+  ///   context: context,
+  ///   routes: {
+  ///     '/product': 'ProductPage',      // Simple string - auto-navigates
+  ///     '/profile': 'ProfilePage',
+  ///   },
+  /// );
+  /// ```
+  ///
+  /// Example - Custom mode:
   /// ```dart
   /// LinkGravityClient.instance.registerRoutes(
   ///   context: context,
   ///   routes: {
   ///     '/product': (deepLink) => RouteAction((ctx, data) {
-  ///       // FlutterFlow with go_router
-  ///       ctx.goNamed(
-  ///         'ProductPage',
-  ///         extra: {'id': data.getParam('id')},
-  ///       );
+  ///       // Custom validation
+  ///       final id = data.getParam('id');
+  ///       if (id == null) {
+  ///         ctx.goNamed('ErrorPage');
+  ///         return;
+  ///       }
+  ///
+  ///       // Custom analytics
+  ///       trackEvent('product_opened', {'id': id});
+  ///
+  ///       ctx.goNamed('ProductPage', extra: {'id': id});
   ///     }),
-  ///     '/profile': (deepLink) => RouteAction((ctx, data) {
-  ///       // Standard Flutter Navigator
-  ///       Navigator.of(ctx).pushNamed('/profile', arguments: data.params);
-  ///     }),
+  ///   },
+  /// );
+  /// ```
+  ///
+  /// Example - Mixed mode:
+  /// ```dart
+  /// LinkGravityClient.instance.registerRoutes(
+  ///   context: context,
+  ///   routes: {
+  ///     '/product': 'ProductPage',                    // Simple
+  ///     '/special': (deepLink) => RouteAction(...),  // Custom
   ///   },
   /// );
   /// ```
   void registerRoutes({
     required BuildContext context,
-    required Map<String, RouteAction Function(DeepLinkData)> routes,
+    required Map<String, dynamic> routes,
     bool matchPrefix = true,
   }) {
     _ensureInitialized();
 
     // Store for future use
     _routeContext = context;
-    _registeredRoutes = routes;
     _matchPrefix = matchPrefix;
+
+    // Convert routes to internal format (handles both String and RouteAction)
+    _registeredRoutes = _convertRoutesToActions(routes);
 
     LinkGravityLogger.info('Registering ${routes.length} deep link routes...');
 
@@ -465,6 +497,71 @@ class LinkGravityClient {
     );
 
     LinkGravityLogger.info('✅ Deep link routes registered successfully');
+  }
+
+  /// Convert mixed route map to RouteAction functions
+  ///
+  /// Supports two input types:
+  /// 1. String: Route name for automatic navigation
+  /// 2. RouteAction Function(DeepLinkData): Custom navigation logic
+  ///
+  /// Returns a normalized map with RouteAction builders for internal use.
+  Map<String, RouteAction Function(DeepLinkData)> _convertRoutesToActions(
+    Map<String, dynamic> routes,
+  ) {
+    final converted = <String, RouteAction Function(DeepLinkData)>{};
+
+    for (final entry in routes.entries) {
+      final pattern = entry.key;
+      final value = entry.value;
+
+      if (value is String) {
+        // Simple mode: String route name
+        final routeName = value;
+        converted[pattern] = (deepLink) => RouteAction((ctx, data) {
+          // Auto-navigation using dynamic dispatch
+          // This supports both go_router (goNamed) and Flutter Navigator (pushNamed)
+          try {
+            // Try go_router style first (FlutterFlow default)
+            // ignore: avoid_dynamic_calls
+            (ctx as dynamic).goNamed(
+              routeName,
+              extra: data.params.isNotEmpty ? data.params : null,
+            );
+          } catch (e) {
+            // Fallback to standard Navigator
+            try {
+              Navigator.of(ctx).pushNamed(
+                routeName,
+                arguments: data.params.isNotEmpty ? data.params : null,
+              );
+            } catch (navError) {
+              LinkGravityLogger.error(
+                'Failed to navigate to $routeName. '
+                'Ensure your context supports goNamed() or Navigator.pushNamed()',
+                navError,
+              );
+              rethrow;
+            }
+          }
+        });
+
+        LinkGravityLogger.debug(
+            'Registered simple route: $pattern -> $routeName');
+      } else if (value is RouteAction Function(DeepLinkData)) {
+        // Custom mode: User-provided RouteAction builder
+        converted[pattern] = value;
+
+        LinkGravityLogger.debug('Registered custom route: $pattern -> RouteAction');
+      } else {
+        throw ArgumentError(
+          'Route value must be either String (route name) or '
+          'RouteAction Function(DeepLinkData). Got: ${value.runtimeType}',
+        );
+      }
+    }
+
+    return converted;
   }
 
   /// Handle route matching for incoming deep links
