@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **[IOS-002] SKAdNetwork Switch Statement**: Fixed exhaustive switch warning in SKAdNetworkService
   - Changed `@unknown default` to `default` in ConversionValue.toString() (line 171)
   - Resolves compilation warning in iOS 16.1+ where `@unknown default` makes switch non-exhaustive
+- **[IOS-003] Deferred Link Response Parsing**: Fixed iOS fingerprint matching response parsing
+  - iOS backend sends `{ success: true, match: { deepLinkUrl, linkId, ... } }` (flat in match object)
+  - Android backend sends `{ success: true, deepLinkData: {...}, linkId, ... }` (nested deepLinkData)
+  - Updated `DeferredLinkResponse.fromJson()` to handle both formats
+  - Resolves issue where iOS deferred links were found but `deepLinkUrl` was null
 - **[API-002] Event Batch Format**: Fixed event batch format to match backend API schema
   - Backend expects `{ events: [{ type, properties, ... }] }` format
   - SDK was sending `{ events: [{ name, data, ... }] }` format

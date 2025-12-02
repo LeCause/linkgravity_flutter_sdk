@@ -51,21 +51,39 @@ class DeferredLinkResponse {
 
   /// Create from JSON (API response)
   ///
-  /// Handles both wrapped and flat response formats:
-  /// - Wrapped: { success: true, match: { linkId, deepLinkData, ... } }
-  /// - Flat: { linkId, deepLinkData, ... } (backward compatible)
+  /// Handles multiple response formats:
+  /// 1. Wrapped with match object (fingerprint): { success: true, match: { deepLinkUrl, linkId, ... } }
+  /// 2. Wrapped with deepLinkData: { success: true, match: { deepLinkData: {...}, linkId, ... } }
+  /// 3. Flat (referrer): { success: true, deepLinkData: {...}, linkId, ... }
   factory DeferredLinkResponse.fromJson(Map<String, dynamic> json) {
     // Extract data from either wrapped or flat response
     final data = json.containsKey('match') && json['match'] != null
         ? json['match'] as Map<String, dynamic>
         : json;
 
+    // Handle deepLinkData - can be nested or at match level
+    Map<String, dynamic>? deepLinkData;
+
+    if (data.containsKey('deepLinkData') && data['deepLinkData'] != null) {
+      // Format 1: deepLinkData is already a nested object (Android referrer)
+      deepLinkData = data['deepLinkData'] as Map<String, dynamic>;
+    } else if (data.containsKey('deepLinkUrl')) {
+      // Format 2: deepLinkUrl is directly in match object (iOS fingerprint)
+      // Construct deepLinkData from flat structure
+      deepLinkData = {
+        'deepLinkUrl': data['deepLinkUrl'],
+        if (data.containsKey('path')) 'path': data['path'],
+        if (data.containsKey('params')) 'params': data['params'],
+        if (data.containsKey('utm')) 'utm': data['utm'],
+      };
+    }
+
     return DeferredLinkResponse(
       success: json['success'] ?? true,
       alreadyClaimed: data['alreadyClaimed'] as bool?,
       claimedAt:
           data['claimedAt'] != null ? DateTime.parse(data['claimedAt'] as String) : null,
-      deepLinkData: data['deepLinkData'] as Map<String, dynamic>?,
+      deepLinkData: deepLinkData,
       linkId: data['linkId'] as String?,
       shortCode: data['shortCode'] as String?,
       platform: data['platform'] as String?,
