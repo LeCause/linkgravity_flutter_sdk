@@ -5,6 +5,18 @@ All notable changes to the LinkGravity Flutter SDK will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-12-02
+
+### Fixed
+- **[IOS-001] Type Conversion in ATTService**: Fixed type conversion errors in iOS ATT (App Tracking Transparency) service
+  - Added explicit `Int()` conversion for `ATTrackingManager.AuthorizationStatus.rawValue` (which is `UInt`)
+  - Affects `getTrackingAuthorizationStatus()` method (line 23)
+  - Affects `requestTrackingAuthorization()` completion handler (line 63)
+  - Resolves build errors on iOS when using the ATT framework
+
+### Breaking Changes
+- None (bug fix only)
+
 ## [1.1.0] - 2025-11-21
 
 ### Fixed

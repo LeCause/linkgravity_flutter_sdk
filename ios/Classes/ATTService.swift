@@ -20,7 +20,7 @@ class ATTService {
     @available(iOS 14.0, *)
     func getTrackingAuthorizationStatus() -> Int {
         if #available(iOS 14.0, *) {
-            return ATTrackingManager.trackingAuthorizationStatus.rawValue
+            return Int(ATTrackingManager.trackingAuthorizationStatus.rawValue)
         }
         return 3 // .authorized for pre-iOS 14
     }
@@ -60,7 +60,7 @@ class ATTService {
                 #if DEBUG
                 print("[LinkGravity] ATT: Authorization status - \(status.rawValue)")
                 #endif
-                completion(status.rawValue)
+                completion(Int(status.rawValue))
             }
         } else {
             // Pre-iOS 14 - tracking always authorized
