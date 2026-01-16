@@ -221,16 +221,20 @@ class LinkGravityClient {
   /// - Android: Play Install Referrer (deterministic, 100% accuracy) → Fingerprint (fallback)
   /// - iOS: Fingerprint only (probabilistic, ~85-90% accuracy)
   Future<void> _handleDeferredDeepLink() async {
+    LinkGravityLogger.info('🔍 Starting deferred deep link check...');
+
     final isFirstLaunch = await _storage.isFirstLaunch();
 
+    LinkGravityLogger.info('🔍 isFirstLaunch result: $isFirstLaunch');
+
     if (!isFirstLaunch) {
-      LinkGravityLogger.debug(
-          'Not first launch, skipping deferred deep link check');
+      LinkGravityLogger.warning(
+          '⚠️ Not first launch, skipping deferred deep link check');
       return;
     }
 
     LinkGravityLogger.info(
-        'First launch detected, checking for deferred deep link...');
+        '✅ First launch detected, checking for deferred deep link...');
 
     try {
       // Create deferred deep link service with Android referrer support
