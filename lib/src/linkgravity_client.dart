@@ -753,7 +753,7 @@ class LinkGravityClient {
   /// Handle route matching for incoming deep links
   ///
   /// This is called automatically by [registerRoutes] when a deep link is received.
-  void _handleRouteMatch(DeepLinkData deepLink) {
+  Future<void> _handleRouteMatch(DeepLinkData deepLink) async {
     LinkGravityLogger.debug('🔍 _handleRouteMatch called with path: ${deepLink.path}');
 
     if (_routeContext == null || _registeredRoutes == null) {
