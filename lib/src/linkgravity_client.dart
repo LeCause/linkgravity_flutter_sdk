@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -16,6 +17,8 @@ import 'services/deep_link_service.dart';
 import 'services/deferred_deep_link_service.dart';
 import 'services/analytics_service.dart';
 import 'services/install_referrer_service.dart';
+import 'services/skadnetwork_service.dart';
+import 'services/idfa_service.dart';
 import 'linkgravity_config.dart';
 import 'utils/logger.dart';
 
@@ -71,6 +74,8 @@ class LinkGravityClient {
   late final DeepLinkService _deepLink;
   late final InstallReferrerService _installReferrer;
   late final AnalyticsService _analytics;
+  late final SKAdNetworkService _skadnetwork;
+  late final IDFAService _idfa;
 
   /// Whether SDK has been initialized
   bool _initialized = false;
@@ -118,6 +123,8 @@ class LinkGravityClient {
       enabled: config.enableAnalytics,
       offlineQueueEnabled: config.enableOfflineQueue,
     );
+    _skadnetwork = SKAdNetworkService(apiService: _api);
+    _idfa = IDFAService();
   }
 
   /// Initialize the LinkGravity SDK
@@ -248,6 +255,14 @@ class LinkGravityClient {
       // Uses retry logic with exponential backoff for better reliability
       final match = await deferredService.matchDeferredDeepLinkWithRetry();
 
+      LinkGravityLogger.debug('🔍 Match result: ${match != null ? "not null" : "NULL"}');
+      if (match != null) {
+        LinkGravityLogger.debug('🔍 match.success: ${match.success}');
+        LinkGravityLogger.debug('🔍 match.deepLinkUrl: ${match.deepLinkUrl}');
+        LinkGravityLogger.debug('🔍 match.linkId: ${match.linkId}');
+        LinkGravityLogger.debug('🔍 match.matchMethod: ${match.matchMethod}');
+      }
+
       if (match != null && match.success && match.deepLinkUrl != null) {
         LinkGravityLogger.info('✅ Deferred deep link found!');
         LinkGravityLogger.info('   Method: ${match.matchMethod}');
@@ -279,13 +294,17 @@ class LinkGravityClient {
 
         // Emit deep link event
         final uri = Uri.parse(match.deepLinkUrl!);
+        LinkGravityLogger.debug('🔍 Parsing deep link URL: ${match.deepLinkUrl}');
         final deepLink = _deepLink.parseLink(uri);
+        LinkGravityLogger.debug('🔍 Parsed deep link - Path: ${deepLink.path}, Params: ${deepLink.params}');
 
         // Set as initial link so it's available via initialDeepLink getter
         // This allows the app to check for deferred links after initialization
         _deepLink.initialLink = deepLink;
+        LinkGravityLogger.debug('🔍 Set initialLink in DeepLinkService: ${deepLink.path}');
 
         _deepLink.linkController.add(deepLink);
+        LinkGravityLogger.debug('🔍 Emitted deep link to stream (may have no listeners yet)');
       } else {
         LinkGravityLogger.debug('No deferred deep link found');
       }
@@ -634,32 +653,34 @@ class LinkGravityClient {
     _registeredRoutes = _convertRoutesToActions(routes);
 
     LinkGravityLogger.info('Registering ${routes.length} deep link routes...');
+    LinkGravityLogger.debug('🔍 Registered route patterns: ${_registeredRoutes!.keys.toList()}');
 
     // Handle initial deep link (cold start)
     final initialLink = _deepLink.initialLink;
+    LinkGravityLogger.debug('🔍 Checking for initialLink: ${initialLink != null ? initialLink.path : "null"}');
+
     if (initialLink != null) {
-      LinkGravityLogger.info('Processing initial deep link: ${initialLink.path}');
-      // Process initial link asynchronously (don't block registration)
-      _handleRouteMatch(initialLink).catchError((error, stackTrace) {
-        LinkGravityLogger.error('Error processing initial deep link', error, stackTrace);
-      });
+      LinkGravityLogger.info('✅ Found initial deep link, processing: ${initialLink.path}');
+      _handleRouteMatch(initialLink);
       // Clear initial link after processing to prevent duplicate handling
       _deepLink.initialLink = null;
+      LinkGravityLogger.debug('🔍 Cleared initialLink after processing');
+    } else {
+      LinkGravityLogger.warning('⚠️ No initialLink found - deferred link may not have been set');
     }
 
     // Listen for future deep links (warm start)
     _routeStreamSubscription?.cancel();
     _routeStreamSubscription = _deepLink.linkStream.listen(
       (deepLink) {
-        // Handle asynchronously
-        _handleRouteMatch(deepLink).catchError((error, stackTrace) {
-          LinkGravityLogger.error('Error processing deep link', error, stackTrace);
-        });
+        LinkGravityLogger.debug('🔍 Received deep link from stream: ${deepLink.path}');
+        _handleRouteMatch(deepLink);
       },
       onError: (error, stackTrace) {
         LinkGravityLogger.error('Deep link stream error', error, stackTrace);
       },
     );
+    LinkGravityLogger.debug('🔍 Stream listener registered for future deep links');
 
     LinkGravityLogger.info('✅ Deep link routes registered successfully');
   }
@@ -732,18 +753,18 @@ class LinkGravityClient {
   /// Handle route matching for incoming deep links
   ///
   /// This is called automatically by [registerRoutes] when a deep link is received.
-  ///
-  /// If [enableAutoResolution] is true in config, this method will first attempt
-  /// to resolve the deep link path as a short code via the backend API before
-  /// matching against registered routes.
-  Future<void> _handleRouteMatch(DeepLinkData deepLink) async {
+  void _handleRouteMatch(DeepLinkData deepLink) {
+    LinkGravityLogger.debug('🔍 _handleRouteMatch called with path: ${deepLink.path}');
+
     if (_routeContext == null || _registeredRoutes == null) {
       LinkGravityLogger.warning(
-          'Route context not available, cannot handle deep link');
+          '❌ Route context not available (context: ${_routeContext != null}, routes: ${_registeredRoutes != null})');
       return;
     }
 
-    LinkGravityLogger.debug('Attempting to match route for: ${deepLink.path}');
+    LinkGravityLogger.debug('🔍 Attempting to match route for: ${deepLink.path}');
+    LinkGravityLogger.debug('🔍 Match mode: ${_matchPrefix ? "prefix" : "exact"}');
+    LinkGravityLogger.debug('🔍 Available routes: ${_registeredRoutes!.keys.toList()}');
 
     // Auto-resolution: Try to resolve as short code if enabled
     DeepLinkData resolvedDeepLink = deepLink;
@@ -802,23 +823,29 @@ class LinkGravityClient {
           ? resolvedDeepLink.path.startsWith(routePattern)
           : resolvedDeepLink.path == routePattern;
 
+      LinkGravityLogger.debug('🔍 Testing pattern "$routePattern" against "${deepLink.path}": ${matches ? "MATCH" : "no match"}');
+
       if (matches) {
         LinkGravityLogger.info(
             '✅ Matched route: $routePattern -> ${resolvedDeepLink.path}');
 
         try {
-          final action = actionBuilder(resolvedDeepLink);
-          action.execute(_routeContext!, resolvedDeepLink);
+          LinkGravityLogger.debug('🔍 Building action for route: $routePattern');
+          final action = actionBuilder(deepLink);
+          LinkGravityLogger.debug('🔍 Executing action with context');
+          action.execute(_routeContext!, deepLink);
+          LinkGravityLogger.info('✅ Action executed successfully for: ${deepLink.path}');
         } catch (e, stackTrace) {
           LinkGravityLogger.error(
-              'Error executing route action for $routePattern', e, stackTrace);
+              '❌ Error executing route action for $routePattern', e, stackTrace);
         }
 
         return; // First match wins
       }
     }
 
-    LinkGravityLogger.warning('⚠️ No route matched for: ${resolvedDeepLink.path}');
+    LinkGravityLogger.warning('⚠️ No route matched for: ${deepLink.path}');
+    LinkGravityLogger.warning('⚠️ This means the deep link path does not match any registered route pattern');
   }
 
   // ============================================================================
@@ -1220,5 +1247,236 @@ class LinkGravityClient {
     _instance = null;
 
     LinkGravityLogger.info('LinkGravity SDK disposed');
+  }
+
+  // ==========================================
+  // iOS Attribution - SKAdNetwork & IDFA/ATT
+  // ==========================================
+
+  /// Request tracking authorization from user (iOS only)
+  ///
+  /// Shows the iOS system prompt asking for permission to track.
+  /// Only available on iOS 14.0+
+  ///
+  /// **Important:**
+  /// - Add `NSUserTrackingUsageDescription` to your Info.plist
+  /// - This should be called at an appropriate moment when user understands the value
+  /// - Can only be requested once per app installation
+  ///
+  /// **Privacy Note:**
+  /// IDFA collection is completely optional. By default, LinkGravity uses
+  /// privacy-first probabilistic attribution. Use this only if you need
+  /// deterministic attribution and have proper consent.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Check if we should request permission
+  /// if (Platform.isIOS) {
+  ///   final status = await linkGravity.getTrackingAuthorizationStatus();
+  ///   if (status == TrackingAuthorizationStatus.notDetermined) {
+  ///     // Good time to show explanation to user, then request
+  ///     final newStatus = await linkGravity.requestTrackingAuthorization();
+  ///     if (newStatus == TrackingAuthorizationStatus.authorized) {
+  ///       print('User granted tracking permission');
+  ///     }
+  ///   }
+  /// }
+  /// ```
+  Future<TrackingAuthorizationStatus> requestTrackingAuthorization() async {
+    if (!Platform.isIOS) {
+      LinkGravityLogger.debug('ATT: Not available on non-iOS platform');
+      return TrackingAuthorizationStatus.notDetermined;
+    }
+
+    final status = await _idfa.requestTrackingAuthorization();
+
+    // If authorized, collect IDFA and update fingerprint
+    if (status == TrackingAuthorizationStatus.authorized) {
+      final idfa = await _idfa.getIDFA();
+      if (idfa != null) {
+        LinkGravityLogger.info('ATT: IDFA collected for deterministic attribution');
+        // IDFA will be included in future fingerprint updates
+      }
+    }
+
+    return status;
+  }
+
+  /// Get current tracking authorization status (iOS only)
+  ///
+  /// Check status without requesting permission
+  ///
+  /// Example:
+  /// ```dart
+  /// final status = await linkGravity.getTrackingAuthorizationStatus();
+  /// switch (status) {
+  ///   case TrackingAuthorizationStatus.authorized:
+  ///     print('Tracking authorized');
+  ///     break;
+  ///   case TrackingAuthorizationStatus.denied:
+  ///     print('User denied tracking');
+  ///     break;
+  ///   case TrackingAuthorizationStatus.notDetermined:
+  ///     print('User has not been asked yet');
+  ///     break;
+  ///   case TrackingAuthorizationStatus.restricted:
+  ///     print('Tracking restricted (e.g., parental controls)');
+  ///     break;
+  /// }
+  /// ```
+  Future<TrackingAuthorizationStatus> getTrackingAuthorizationStatus() async {
+    return _idfa.getTrackingAuthorizationStatus();
+  }
+
+  /// Get IDFA if available (iOS only)
+  ///
+  /// Returns null if user hasn't authorized tracking or IDFA is unavailable
+  ///
+  /// Example:
+  /// ```dart
+  /// final idfa = await linkGravity.getIDFA();
+  /// if (idfa != null) {
+  ///   print('IDFA available for deterministic attribution');
+  /// } else {
+  ///   print('Using probabilistic attribution');
+  /// }
+  /// ```
+  Future<String?> getIDFA() async {
+    return _idfa.getIDFA();
+  }
+
+  /// Update SKAdNetwork conversion value (iOS 14.0+)
+  ///
+  /// Report conversion events to ad networks via SKAdNetwork.
+  /// Use this to track in-app events for iOS ad attribution.
+  ///
+  /// [conversionValue] must be 0-63 (6-bit value)
+  ///
+  /// **Conversion Value Schema Example:**
+  /// - 0-10: Tutorial progress
+  /// - 11-20: Feature usage
+  /// - 21-40: Purchase events
+  /// - 41-63: LTV tiers
+  ///
+  /// Example:
+  /// ```dart
+  /// // User completed tutorial
+  /// await linkGravity.updateConversionValue(10);
+  ///
+  /// // User made first purchase
+  /// await linkGravity.updateConversionValue(21);
+  ///
+  /// // User reached high LTV tier
+  /// await linkGravity.updateConversionValue(50);
+  /// ```
+  Future<bool> updateConversionValue(int conversionValue) async {
+    if (!Platform.isIOS) {
+      LinkGravityLogger.debug('SKAdNetwork: Not available on non-iOS platform');
+      return false;
+    }
+
+    return _skadnetwork.updateConversionValue(conversionValue);
+  }
+
+  /// Update SKAdNetwork postback conversion value (iOS 15.4+)
+  ///
+  /// Advanced conversion tracking with fine and coarse values.
+  /// Provides more granular conversion tracking than basic conversion value.
+  ///
+  /// [fineValue]: 6-bit fine-grained value (0-63)
+  /// [coarseValue]: Coarse conversion value ('low', 'medium', 'high')
+  /// [lockWindow]: Whether to lock the conversion window
+  ///
+  /// Example:
+  /// ```dart
+  /// // High-value conversion with specific fine value
+  /// await linkGravity.updatePostbackConversionValue(
+  ///   fineValue: 42,
+  ///   coarseValue: 'high',
+  ///   lockWindow: false,
+  /// );
+  ///
+  /// // Lock window after critical conversion
+  /// await linkGravity.updatePostbackConversionValue(
+  ///   fineValue: 63,
+  ///   coarseValue: 'high',
+  ///   lockWindow: true, // Lock to prevent further updates
+  /// );
+  /// ```
+  Future<bool> updatePostbackConversionValue({
+    required int fineValue,
+    required String coarseValue,
+    bool lockWindow = false,
+  }) async {
+    if (!Platform.isIOS) {
+      LinkGravityLogger.debug('SKAdNetwork: Not available on non-iOS platform');
+      return false;
+    }
+
+    return _skadnetwork.updatePostbackConversionValue(
+      fineValue: fineValue,
+      coarseValue: coarseValue,
+      lockWindow: lockWindow,
+    );
+  }
+
+  /// Get SKAdNetwork version available on this device
+  ///
+  /// Returns version like "4.0", "3.0", "2.2", "2.0", or "Not supported"
+  ///
+  /// Example:
+  /// ```dart
+  /// final version = await linkGravity.getSKAdNetworkVersion();
+  /// print('SKAdNetwork version: $version');
+  ///
+  /// if (version == '4.0') {
+  ///   // Use advanced features
+  ///   await linkGravity.updatePostbackConversionValue(
+  ///     fineValue: 42,
+  ///     coarseValue: 'high',
+  ///   );
+  /// } else if (version == '2.0' || version == '3.0') {
+  ///   // Use basic conversion value
+  ///   await linkGravity.updateConversionValue(42);
+  /// }
+  /// ```
+  Future<String> getSKAdNetworkVersion() async {
+    return _skadnetwork.getSKAdNetworkVersion();
+  }
+
+  /// Check if SKAdNetwork is available on this device
+  ///
+  /// Returns true on iOS 14.0+, false otherwise
+  Future<bool> isSKAdNetworkAvailable() async {
+    return _skadnetwork.isAvailable();
+  }
+
+  /// Get comprehensive iOS attribution info for debugging
+  ///
+  /// Returns information about SKAdNetwork and ATT status
+  ///
+  /// Example:
+  /// ```dart
+  /// final info = await linkGravity.getIOSAttributionInfo();
+  /// print('SKAdNetwork: ${info['skadnetwork']}');
+  /// print('ATT: ${info['att']}');
+  /// ```
+  Future<Map<String, dynamic>> getIOSAttributionInfo() async {
+    if (!Platform.isIOS) {
+      return {
+        'platform': 'non-iOS',
+        'skadnetwork': {'available': false},
+        'att': {'available': false},
+      };
+    }
+
+    final skadConfig = await _skadnetwork.getConfig();
+    final attInfo = await _idfa.getTrackingInfo();
+
+    return {
+      'platform': 'iOS',
+      'skadnetwork': skadConfig,
+      'att': attInfo,
+    };
   }
 }

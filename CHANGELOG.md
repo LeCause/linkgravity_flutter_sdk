@@ -5,6 +5,37 @@ All notable changes to the LinkGravity Flutter SDK will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-12-02
+
+### Fixed
+- **[IOS-001] Type Conversion in ATTService**: Fixed type conversion errors in iOS ATT (App Tracking Transparency) service
+  - Added explicit `Int()` conversion for `ATTrackingManager.AuthorizationStatus.rawValue` (which is `UInt`)
+  - Affects `getTrackingAuthorizationStatus()` method (line 23)
+  - Affects `requestTrackingAuthorization()` completion handler (line 63)
+  - Resolves build errors on iOS when using the ATT framework
+- **[IOS-002] SKAdNetwork Switch Statement**: Fixed exhaustive switch warning in SKAdNetworkService
+  - Changed `@unknown default` to `default` in ConversionValue.toString() (line 171)
+  - Resolves compilation warning in iOS 16.1+ where `@unknown default` makes switch non-exhaustive
+- **[IOS-003] Deferred Link Response Parsing**: Fixed iOS fingerprint matching response parsing
+  - iOS backend sends `{ success: true, match: { deepLinkUrl, linkId, ... } }` (flat in match object)
+  - Android backend sends `{ success: true, deepLinkData: {...}, linkId, ... }` (nested deepLinkData)
+  - Updated `DeferredLinkResponse.fromJson()` to handle both formats
+  - Resolves issue where iOS deferred links were found but `deepLinkUrl` was null
+- **[API-002] Event Batch Format**: Fixed event batch format to match backend API schema
+  - Backend expects `{ events: [{ type, properties, ... }] }` format
+  - SDK was sending `{ events: [{ name, data, ... }] }` format
+  - Added transformation in `ApiService.sendBatch()` to convert `name` → `type` and `data` → `properties`
+  - Resolves 400 Bad Request errors when sending analytics events
+
+### Improved
+- **[DEBUG-001] Enhanced Deep Link Debugging**: Added comprehensive debug logging for iOS deep link troubleshooting
+  - Added 🔍 emoji-tagged logs throughout deep link flow
+  - Shows deferred link parsing, route matching, and navigation execution
+  - Helps diagnose iOS-specific deep linking issues
+
+### Breaking Changes
+- None (bug fix only)
+
 ## [1.1.0] - 2025-11-21
 
 ### Fixed
