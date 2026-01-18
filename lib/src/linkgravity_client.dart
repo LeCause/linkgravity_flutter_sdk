@@ -796,8 +796,25 @@ class LinkGravityClient {
           }
         } else {
           LinkGravityLogger.warning('⚠️ Resolution failed for: $shortCode');
-          // Optional: You could pass the raw path to onNavigate here if you wanted
-          // to support direct paths that aren't short codes.
+
+          // FALLBACK: Treat as direct path
+          // If the "Deep Link" was already resolved by the deferred service to "/hiddenDeepLinkPage",
+          // then the "shortCode" extraction might just have returned "hiddenDeepLinkPage".
+          // In this case, we should just navigate to it!
+
+          String directPath = shortCode;
+          if (!directPath.startsWith('/')) directPath = '/$directPath';
+
+          // Add incoming params back
+          if (incomingParams.isNotEmpty) {
+            final uri = Uri(path: directPath, queryParameters: incomingParams);
+            directPath = uri.toString();
+          }
+
+          LinkGravityLogger.info(
+            '🚀 Fallback: Navigating directly to path sections: $directPath',
+          );
+          onNavigate(directPath);
         }
       } catch (e, stack) {
         LinkGravityLogger.error('❌ Error resolving link', e, stack);
