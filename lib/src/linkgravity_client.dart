@@ -149,7 +149,8 @@ class LinkGravityClient {
   }) async {
     if (_instance != null) {
       LinkGravityLogger.warning(
-          'LinkGravity already initialized, returning existing instance');
+        'LinkGravity already initialized, returning existing instance',
+      );
       return _instance!;
     }
 
@@ -221,7 +222,10 @@ class LinkGravityClient {
       LinkGravityLogger.info('LinkGravity SDK initialized successfully');
     } catch (e, stackTrace) {
       LinkGravityLogger.error(
-          'Failed to initialize LinkGravity SDK', e, stackTrace);
+        'Failed to initialize LinkGravity SDK',
+        e,
+        stackTrace,
+      );
       rethrow;
     }
   }
@@ -240,12 +244,14 @@ class LinkGravityClient {
 
     if (!isFirstLaunch) {
       LinkGravityLogger.warning(
-          '⚠️ Not first launch, skipping deferred deep link check');
+        '⚠️ Not first launch, skipping deferred deep link check',
+      );
       return;
     }
 
     LinkGravityLogger.info(
-        '✅ First launch detected, checking for deferred deep link...');
+      '✅ First launch detected, checking for deferred deep link...',
+    );
 
     try {
       // Create deferred deep link service with Android referrer support
@@ -259,7 +265,9 @@ class LinkGravityClient {
       // Uses retry logic with exponential backoff for better reliability
       final match = await deferredService.matchDeferredDeepLinkWithRetry();
 
-      LinkGravityLogger.debug('🔍 Match result: ${match != null ? "not null" : "NULL"}');
+      LinkGravityLogger.debug(
+        '🔍 Match result: ${match != null ? "not null" : "NULL"}',
+      );
       if (match != null) {
         LinkGravityLogger.debug('🔍 match.success: ${match.success}');
         LinkGravityLogger.debug('🔍 match.deepLinkUrl: ${match.deepLinkUrl}');
@@ -285,35 +293,44 @@ class LinkGravityClient {
         );
 
         // Track deferred link opened event
-        await _analytics.trackEvent(
-          EventType.deferredLinkOpened,
-          {
-            'linkId': match.linkId,
-            'shortCode': match.shortCode,
-            'matchMethod': match.matchMethod,
-            'deepLinkUrl': match.deepLinkUrl,
-            ...?match.params,
-          },
-        );
+        await _analytics.trackEvent(EventType.deferredLinkOpened, {
+          'linkId': match.linkId,
+          'shortCode': match.shortCode,
+          'matchMethod': match.matchMethod,
+          'deepLinkUrl': match.deepLinkUrl,
+          ...?match.params,
+        });
 
         // Emit deep link event
         final uri = Uri.parse(match.deepLinkUrl!);
-        LinkGravityLogger.debug('🔍 Parsing deep link URL: ${match.deepLinkUrl}');
+        LinkGravityLogger.debug(
+          '🔍 Parsing deep link URL: ${match.deepLinkUrl}',
+        );
         final deepLink = _deepLink.parseLink(uri);
-        LinkGravityLogger.debug('🔍 Parsed deep link - Path: ${deepLink.path}, Params: ${deepLink.params}');
+        LinkGravityLogger.debug(
+          '🔍 Parsed deep link - Path: ${deepLink.path}, Params: ${deepLink.params}',
+        );
 
         // Set as initial link so it's available via initialDeepLink getter
         // This allows the app to check for deferred links after initialization
         _deepLink.initialLink = deepLink;
-        LinkGravityLogger.debug('🔍 Set initialLink in DeepLinkService: ${deepLink.path}');
+        LinkGravityLogger.debug(
+          '🔍 Set initialLink in DeepLinkService: ${deepLink.path}',
+        );
 
         _deepLink.linkController.add(deepLink);
-        LinkGravityLogger.debug('🔍 Emitted deep link to stream (may have no listeners yet)');
+        LinkGravityLogger.debug(
+          '🔍 Emitted deep link to stream (may have no listeners yet)',
+        );
       } else {
         LinkGravityLogger.debug('No deferred deep link found');
       }
     } catch (e, stackTrace) {
-      LinkGravityLogger.error('Error handling deferred deep link', e, stackTrace);
+      LinkGravityLogger.error(
+        'Error handling deferred deep link',
+        e,
+        stackTrace,
+      );
     }
 
     // Mark as launched (even if matching failed)
@@ -322,17 +339,14 @@ class LinkGravityClient {
 
   /// Track app open event
   Future<void> _trackAppOpen() async {
-    await _analytics.trackEvent(
-      EventType.appOpened,
-      {
-        'appVersion': _appVersion,
-        'platform': await _fingerprint.getPlatformName(),
-        'deviceModel': await _fingerprint.getDeviceModel(),
-        'osVersion': await _fingerprint.getOSVersion(),
-        'isPhysicalDevice': await _fingerprint.isPhysicalDevice(),
-        ...?config.globalMetadata,
-      },
-    );
+    await _analytics.trackEvent(EventType.appOpened, {
+      'appVersion': _appVersion,
+      'platform': await _fingerprint.getPlatformName(),
+      'deviceModel': await _fingerprint.getDeviceModel(),
+      'osVersion': await _fingerprint.getOSVersion(),
+      'isPhysicalDevice': await _fingerprint.isPhysicalDevice(),
+      ...?config.globalMetadata,
+    });
   }
 
   // ============================================================================
@@ -362,14 +376,11 @@ class LinkGravityClient {
 
     // Track link created event
     if (config.enableAnalytics) {
-      await _analytics.trackEvent(
-        EventType.linkCreated,
-        {
-          'linkId': link.id,
-          'shortCode': link.shortCode,
-          'longUrl': link.longUrl,
-        },
-      );
+      await _analytics.trackEvent(EventType.linkCreated, {
+        'linkId': link.id,
+        'shortCode': link.shortCode,
+        'longUrl': link.longUrl,
+      });
     }
 
     return link;
@@ -382,8 +393,11 @@ class LinkGravityClient {
   }
 
   /// Get all links
-  Future<List<LinkGravity>> getLinks(
-      {int? limit, int? offset, String? search}) async {
+  Future<List<LinkGravity>> getLinks({
+    int? limit,
+    int? offset,
+    String? search,
+  }) async {
     _ensureInitialized();
     return await _api.getLinks(limit: limit, offset: offset, search: search);
   }
@@ -463,25 +477,21 @@ class LinkGravityClient {
     // Auto-detect platform if not provided
     platform ??= await _fingerprint.getPlatformName();
 
-    LinkGravityLogger.info('Resolving shortCode: $shortCode (platform: $platform)');
-
-    final result = await _api.resolveShortCode(
-      shortCode,
-      platform: platform,
+    LinkGravityLogger.info(
+      'Resolving shortCode: $shortCode (platform: $platform)',
     );
+
+    final result = await _api.resolveShortCode(shortCode, platform: platform);
 
     if (result != null && result['success'] == true) {
       // Track shortCode resolution event
       if (config.enableAnalytics) {
-        await _analytics.trackEvent(
-          EventType.deepLinkOpened,
-          {
-            'shortCode': shortCode,
-            'route': result['route'],
-            'destination': result['destination'],
-            'platform': platform,
-          },
-        );
+        await _analytics.trackEvent(EventType.deepLinkOpened, {
+          'shortCode': shortCode,
+          'route': result['route'],
+          'destination': result['destination'],
+          'platform': platform,
+        });
       }
 
       return result;
@@ -551,7 +561,9 @@ class LinkGravityClient {
 
       // Use the existing route matching logic if routes are registered
       if (_registeredRoutes != null && _routeContext != null) {
-        LinkGravityLogger.info('Using registered routes to navigate to: $route');
+        LinkGravityLogger.info(
+          'Using registered routes to navigate to: $route',
+        );
         _handleRouteMatch(resolvedDeepLink);
         return true;
       }
@@ -570,7 +582,10 @@ class LinkGravityClient {
       return true;
     } catch (e, stackTrace) {
       LinkGravityLogger.error(
-          'Failed to navigate to route: $route', e, stackTrace);
+        'Failed to navigate to route: $route',
+        e,
+        stackTrace,
+      );
       return false;
     }
   }
@@ -657,36 +672,155 @@ class LinkGravityClient {
     _registeredRoutes = _convertRoutesToActions(routes);
 
     LinkGravityLogger.info('Registering ${routes.length} deep link routes...');
-    LinkGravityLogger.debug('🔍 Registered route patterns: ${_registeredRoutes!.keys.toList()}');
+    LinkGravityLogger.debug(
+      '🔍 Registered route patterns: ${_registeredRoutes!.keys.toList()}',
+    );
 
     // Handle initial deep link (cold start)
     final initialLink = _deepLink.initialLink;
-    LinkGravityLogger.debug('🔍 Checking for initialLink: ${initialLink != null ? initialLink.path : "null"}');
+    LinkGravityLogger.debug(
+      '🔍 Checking for initialLink: ${initialLink != null ? initialLink.path : "null"}',
+    );
 
     if (initialLink != null) {
-      LinkGravityLogger.info('✅ Found initial deep link, processing: ${initialLink.path}');
+      LinkGravityLogger.info(
+        '✅ Found initial deep link, processing: ${initialLink.path}',
+      );
       _handleRouteMatch(initialLink);
       // Clear initial link after processing to prevent duplicate handling
       _deepLink.initialLink = null;
       LinkGravityLogger.debug('🔍 Cleared initialLink after processing');
     } else {
-      LinkGravityLogger.warning('⚠️ No initialLink found - deferred link may not have been set');
+      LinkGravityLogger.warning(
+        '⚠️ No initialLink found - deferred link may not have been set',
+      );
     }
 
     // Listen for future deep links (warm start)
     _routeStreamSubscription?.cancel();
     _routeStreamSubscription = _deepLink.linkStream.listen(
       (deepLink) {
-        LinkGravityLogger.debug('🔍 Received deep link from stream: ${deepLink.path}');
+        LinkGravityLogger.debug(
+          '🔍 Received deep link from stream: ${deepLink.path}',
+        );
         _handleRouteMatch(deepLink);
       },
       onError: (error, stackTrace) {
         LinkGravityLogger.error('Deep link stream error', error, stackTrace);
       },
     );
-    LinkGravityLogger.debug('🔍 Stream listener registered for future deep links');
+    LinkGravityLogger.debug(
+      '🔍 Stream listener registered for future deep links',
+    );
 
     LinkGravityLogger.info('✅ Deep link routes registered successfully');
+  }
+
+  /// Streamlined Deep Link Handler (Recommended for FlutterFlow)
+  ///
+  /// This method simplifies deep link handling by centralizing logic for:
+  /// 1. Cold Start (Initial Link)
+  /// 2. Warm Start (Stream Listener)
+  /// 3. Short Code Resolution
+  /// 4. Parameter Merging
+  ///
+  /// Instead of registering routes, you simply provide an [onNavigate] callback
+  /// that receives the final, resolved, fully-parameterized path ready for `go()`.
+  ///
+  /// Example:
+  /// ```dart
+  /// LinkGravityClient.instance.handleDeepLinks(
+  ///   onNavigate: (path) {
+  ///     if (context.mounted) context.go(path);
+  ///   },
+  /// );
+  /// ```
+  void handleDeepLinks({required Function(String) onNavigate}) {
+    _ensureInitialized();
+    LinkGravityLogger.info('🔗 Initializing streamlined deep link handler');
+
+    // 1. Define the processing logic
+    Future<void> processLink(String rawPath) async {
+      if (rawPath.isEmpty || rawPath == '/') return;
+
+      LinkGravityLogger.debug('🔍 Processing raw link: $rawPath');
+
+      // Internal Helper to Resolve & Merge
+      // Extracts potential query params from rawPath (e.g. tappick?promo=1)
+      Uri incomingUri = Uri.parse(
+        rawPath.startsWith('http') ? rawPath : 'http://dummy.com/$rawPath',
+      );
+
+      // Extract shortCode (last segment or full path)
+      String shortCode = incomingUri.pathSegments.isNotEmpty
+          ? incomingUri.pathSegments.last
+          : rawPath;
+
+      if (shortCode.startsWith('/')) shortCode = shortCode.substring(1);
+
+      Map<String, String> incomingParams = incomingUri.queryParameters;
+
+      LinkGravityLogger.info('🔍 Resolving ShortCode: $shortCode');
+
+      try {
+        final result = await resolveShortCode(shortCode);
+
+        if (result != null && result['success'] == true) {
+          String routeString = result['route'] as String;
+          LinkGravityLogger.info('✅ Resolved to base route: $routeString');
+
+          // Merge Params (Backend + Incoming)
+          Uri routeUri = Uri.parse(routeString);
+          Map<String, dynamic> finalParams = {
+            ...routeUri.queryParameters,
+            ...incomingParams,
+          };
+
+          // Reconstruct final path with merged params
+          String finalPath = Uri(
+            path: routeUri.path.startsWith('/')
+                ? routeUri.path
+                : '/${routeUri.path}',
+            queryParameters: finalParams.isNotEmpty ? finalParams : null,
+          ).toString();
+
+          LinkGravityLogger.info('🚀 Delegating navigation to: $finalPath');
+          onNavigate(finalPath);
+
+          // UTM Handling
+          final utm = result['utm'] as Map<String, dynamic>?;
+          if (utm != null) {
+            try {
+              setUTM(UTMParams.fromJson(utm));
+            } catch (_) {}
+          }
+        } else {
+          LinkGravityLogger.warning('⚠️ Resolution failed for: $shortCode');
+          // Optional: You could pass the raw path to onNavigate here if you wanted
+          // to support direct paths that aren't short codes.
+        }
+      } catch (e, stack) {
+        LinkGravityLogger.error('❌ Error resolving link', e, stack);
+      }
+    }
+
+    // 2. Listen for Warm Links
+    _routeStreamSubscription?.cancel();
+    _routeStreamSubscription = _deepLink.linkStream.listen(
+      (l) => processLink(l.path ?? ''),
+      onError: (e, s) => LinkGravityLogger.error('Stream Error', e, s),
+    );
+
+    // 3. Process Cold Start
+    final coldLink = _deepLink.initialLink;
+    if (coldLink != null) {
+      LinkGravityLogger.info('❄️ Processing Cold Start Link: ${coldLink.path}');
+      // Small delay to ensure UI/Router is ready
+      Future.delayed(const Duration(milliseconds: 500), () {
+        processLink(coldLink.path ?? '');
+      });
+      _deepLink.initialLink = null; // Clear to prevent double processing
+    }
   }
 
   /// Convert mixed route map to RouteAction functions
@@ -737,12 +871,15 @@ class LinkGravityClient {
         });
 
         LinkGravityLogger.debug(
-            'Registered simple route: $pattern -> $routeName');
+          'Registered simple route: $pattern -> $routeName',
+        );
       } else if (value is RouteAction Function(DeepLinkData)) {
         // Custom mode: User-provided RouteAction builder
         converted[pattern] = value;
 
-        LinkGravityLogger.debug('Registered custom route: $pattern -> RouteAction');
+        LinkGravityLogger.debug(
+          'Registered custom route: $pattern -> RouteAction',
+        );
       } else {
         throw ArgumentError(
           'Route value must be either String (route name) or '
@@ -758,17 +895,26 @@ class LinkGravityClient {
   ///
   /// This is called automatically by [registerRoutes] when a deep link is received.
   Future<void> _handleRouteMatch(DeepLinkData deepLink) async {
-    LinkGravityLogger.debug('🔍 _handleRouteMatch called with path: ${deepLink.path}');
+    LinkGravityLogger.debug(
+      '🔍 _handleRouteMatch called with path: ${deepLink.path}',
+    );
 
     if (_routeContext == null || _registeredRoutes == null) {
       LinkGravityLogger.warning(
-          '❌ Route context not available (context: ${_routeContext != null}, routes: ${_registeredRoutes != null})');
+        '❌ Route context not available (context: ${_routeContext != null}, routes: ${_registeredRoutes != null})',
+      );
       return;
     }
 
-    LinkGravityLogger.debug('🔍 Attempting to match route for: ${deepLink.path}');
-    LinkGravityLogger.debug('🔍 Match mode: ${_matchPrefix ? "prefix" : "exact"}');
-    LinkGravityLogger.debug('🔍 Available routes: ${_registeredRoutes!.keys.toList()}');
+    LinkGravityLogger.debug(
+      '🔍 Attempting to match route for: ${deepLink.path}',
+    );
+    LinkGravityLogger.debug(
+      '🔍 Match mode: ${_matchPrefix ? "prefix" : "exact"}',
+    );
+    LinkGravityLogger.debug(
+      '🔍 Available routes: ${_registeredRoutes!.keys.toList()}',
+    );
 
     // Auto-resolution: Try to resolve as short code if enabled
     DeepLinkData resolvedDeepLink = deepLink;
@@ -776,7 +922,8 @@ class LinkGravityClient {
       final shortCode = _deepLink.extractShortCode(deepLink);
       if (shortCode != null && shortCode.isNotEmpty) {
         LinkGravityLogger.info(
-            '🔍 Auto-resolution enabled, attempting to resolve: $shortCode');
+          '🔍 Auto-resolution enabled, attempting to resolve: $shortCode',
+        );
 
         try {
           final result = await resolveShortCode(shortCode);
@@ -785,11 +932,15 @@ class LinkGravityClient {
             final resolvedRoute = result['route'] as String?;
             if (resolvedRoute != null && resolvedRoute.isNotEmpty) {
               LinkGravityLogger.info(
-                  '✅ Auto-resolved: $shortCode -> $resolvedRoute');
+                '✅ Auto-resolved: $shortCode -> $resolvedRoute',
+              );
 
               // Create new DeepLinkData with resolved route
               final routeUri = Uri.parse(
-                  resolvedRoute.startsWith('/') ? resolvedRoute : '/$resolvedRoute');
+                resolvedRoute.startsWith('/')
+                    ? resolvedRoute
+                    : '/$resolvedRoute',
+              );
               resolvedDeepLink = DeepLinkData.fromUri(routeUri);
 
               // Set UTM parameters if present in resolution result
@@ -803,17 +954,20 @@ class LinkGravityClient {
               }
             } else {
               LinkGravityLogger.warning(
-                  'Resolution succeeded but no route returned for: $shortCode');
+                'Resolution succeeded but no route returned for: $shortCode',
+              );
             }
           } else {
             LinkGravityLogger.debug(
-                'Resolution not found for: $shortCode, falling back to direct route matching');
+              'Resolution not found for: $shortCode, falling back to direct route matching',
+            );
           }
         } catch (e, stackTrace) {
           LinkGravityLogger.error(
-              'Auto-resolution failed for $shortCode, falling back to direct route matching',
-              e,
-              stackTrace);
+            'Auto-resolution failed for $shortCode, falling back to direct route matching',
+            e,
+            stackTrace,
+          );
         }
       }
     }
@@ -827,21 +981,31 @@ class LinkGravityClient {
           ? resolvedDeepLink.path.startsWith(routePattern)
           : resolvedDeepLink.path == routePattern;
 
-      LinkGravityLogger.debug('🔍 Testing pattern "$routePattern" against "${deepLink.path}": ${matches ? "MATCH" : "no match"}');
+      LinkGravityLogger.debug(
+        '🔍 Testing pattern "$routePattern" against "${deepLink.path}": ${matches ? "MATCH" : "no match"}',
+      );
 
       if (matches) {
         LinkGravityLogger.info(
-            '✅ Matched route: $routePattern -> ${resolvedDeepLink.path}');
+          '✅ Matched route: $routePattern -> ${resolvedDeepLink.path}',
+        );
 
         try {
-          LinkGravityLogger.debug('🔍 Building action for route: $routePattern');
+          LinkGravityLogger.debug(
+            '🔍 Building action for route: $routePattern',
+          );
           final action = actionBuilder(deepLink);
           LinkGravityLogger.debug('🔍 Executing action with context');
           action.execute(_routeContext!, deepLink);
-          LinkGravityLogger.info('✅ Action executed successfully for: ${deepLink.path}');
+          LinkGravityLogger.info(
+            '✅ Action executed successfully for: ${deepLink.path}',
+          );
         } catch (e, stackTrace) {
           LinkGravityLogger.error(
-              '❌ Error executing route action for $routePattern', e, stackTrace);
+            '❌ Error executing route action for $routePattern',
+            e,
+            stackTrace,
+          );
         }
 
         return; // First match wins
@@ -849,7 +1013,9 @@ class LinkGravityClient {
     }
 
     LinkGravityLogger.warning('⚠️ No route matched for: ${deepLink.path}');
-    LinkGravityLogger.warning('⚠️ This means the deep link path does not match any registered route pattern');
+    LinkGravityLogger.warning(
+      '⚠️ This means the deep link path does not match any registered route pattern',
+    );
   }
 
   // ============================================================================
@@ -866,8 +1032,10 @@ class LinkGravityClient {
   ///   'currency': 'USD',
   /// });
   /// ```
-  Future<void> trackEvent(String eventName,
-      [Map<String, dynamic>? properties]) async {
+  Future<void> trackEvent(
+    String eventName, [
+    Map<String, dynamic>? properties,
+  ]) async {
     _ensureInitialized();
 
     if (!config.enableAnalytics) {
@@ -876,10 +1044,7 @@ class LinkGravityClient {
     }
 
     // Merge global metadata
-    final mergedProperties = {
-      ...?config.globalMetadata,
-      ...?properties,
-    };
+    final mergedProperties = {...?config.globalMetadata, ...?properties};
 
     await _analytics.trackEvent(eventName, mergedProperties);
   }
@@ -923,7 +1088,8 @@ class LinkGravityClient {
 
     if (success) {
       LinkGravityLogger.info(
-          'Conversion tracked: $type${revenue != null ? ' ($revenue $currency)' : ''}');
+        'Conversion tracked: $type${revenue != null ? ' ($revenue $currency)' : ''}',
+      );
     }
 
     return success;
@@ -1148,7 +1314,8 @@ class LinkGravityClient {
 
       if (match != null && match.success && match.deepLinkUrl != null) {
         LinkGravityLogger.info(
-            '✅ Deferred deep link found: ${match.deepLinkUrl}');
+          '✅ Deferred deep link found: ${match.deepLinkUrl}',
+        );
         LinkGravityLogger.info('   Method: ${match.matchMethod}');
 
         // Check confidence for fingerprint matches
@@ -1170,7 +1337,8 @@ class LinkGravityClient {
           return match.deepLinkUrl;
         } else {
           LinkGravityLogger.warning(
-              '⚠️ Deep link confidence too low: ${match.confidence}');
+            '⚠️ Deep link confidence too low: ${match.confidence}',
+          );
           onNotFound?.call();
           return null;
         }
@@ -1298,7 +1466,9 @@ class LinkGravityClient {
     if (status == TrackingAuthorizationStatus.authorized) {
       final idfa = await _idfa.getIDFA();
       if (idfa != null) {
-        LinkGravityLogger.info('ATT: IDFA collected for deterministic attribution');
+        LinkGravityLogger.info(
+          'ATT: IDFA collected for deterministic attribution',
+        );
         // IDFA will be included in future fingerprint updates
       }
     }
@@ -1477,10 +1647,6 @@ class LinkGravityClient {
     final skadConfig = await _skadnetwork.getConfig();
     final attInfo = await _idfa.getTrackingInfo();
 
-    return {
-      'platform': 'iOS',
-      'skadnetwork': skadConfig,
-      'att': attInfo,
-    };
+    return {'platform': 'iOS', 'skadnetwork': skadConfig, 'att': attInfo};
   }
 }
