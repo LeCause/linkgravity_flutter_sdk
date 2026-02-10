@@ -904,7 +904,19 @@ class LinkGravityClient {
     // 2. Listen for Warm Links
     _routeStreamSubscription?.cancel();
     _routeStreamSubscription = _deepLink.linkStream.listen(
-      (l) => processLink(l.path ?? ''),
+      (l) {
+        // If the link is already resolved (e.g., from deferred deep link match),
+        // navigate directly without trying to resolve the shortCode again
+        if (l.isResolved) {
+          LinkGravityLogger.info(
+            '✅ Link already resolved, navigating directly to: ${l.path}',
+          );
+          final path = l.path.startsWith('/') ? l.path : '/${l.path}';
+          onNavigate(path);
+        } else {
+          processLink(l.path);
+        }
+      },
       onError: (e, s) => LinkGravityLogger.error('Stream Error', e, s),
     );
 
@@ -914,7 +926,18 @@ class LinkGravityClient {
       LinkGravityLogger.info('❄️ Processing Cold Start Link: ${coldLink.path}');
       // Small delay to ensure UI/Router is ready
       Future.delayed(const Duration(milliseconds: 500), () {
-        processLink(coldLink.path ?? '');
+        // If the link is already resolved (e.g., from deferred deep link match),
+        // navigate directly without trying to resolve the shortCode again
+        if (coldLink.isResolved) {
+          LinkGravityLogger.info(
+            '✅ Cold start link already resolved, navigating directly to: ${coldLink.path}',
+          );
+          final path =
+              coldLink.path.startsWith('/') ? coldLink.path : '/${coldLink.path}';
+          onNavigate(path);
+        } else {
+          processLink(coldLink.path);
+        }
       });
       _deepLink.initialLink = null; // Clear to prevent double processing
     }
